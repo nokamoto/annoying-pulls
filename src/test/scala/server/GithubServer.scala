@@ -1,9 +1,8 @@
 package server
 
-import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
-import github.json.{Issue, Pull, Repo}
+import github.json.{Issue, Label, Pull, Repo}
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.{Handler, RequestHeader, _}
 import play.api.routing.sird._
@@ -17,25 +16,33 @@ import play.api.routing.sird._
   * @see [[https://developer.github.com/v3/issues/#get-a-single-issue]]
   */
 class GithubServer(port: Int) {
+  val org = new AtomicReference[GithubOrg]()
+
+  val user = new AtomicReference[GithubUser]()
+
   private[this] def ok[A : Writes](value: A) = Action(Results.Ok(Json.toJson(value)))
 
-  private[this] def repos(owner: String): List[Repo] = {
-    List.fill(3)(UUID.randomUUID().toString).map(name => Repo(name = name, full_name = s"$owner/$name"))
-  }
+  private[this] def getOwner(owner: String): GithubOwner = if (owner == org.get().owner) org.get() else user.get()
 
-  private[this] def htmlUrl(owner: String, repo: String, n: Int): String = s"http://localhost:$port/$owner/$repo/pulls/$n"
+  private[this] def repos(owner: String): List[Repo] = {
+    getOwner(owner).repos.map(repo => Repo(name = repo.name, full_name = repo.fullName))
+  }
 
   private[this] def issueUrl(owner: String, repo: String, n: Int): String = s"http://localhost:$port/repos/$owner/$repo/issues/$n"
 
-  private[this] def title(n: Int): String = s"#$n"
-
   private[this] def pulls(owner: String, repo: String): List[Pull] = {
-    List(1, 10, 100).map(n =>
-      Pull(html_url = htmlUrl(owner, repo, n), title = title(n), issue_url = issueUrl(owner, repo, n), number = n))
+    getOwner(owner).repos.find(_.name == repo).get.pulls.map { pull =>
+      Pull(html_url = pull.url, title = pull.title, issue_url = issueUrl(owner, repo, pull.number), number = pull.number)
+    }
   }
 
   private[this] def issue(owner: String, repo: String, number: Int): Issue = {
-    Issue(labels = Nil, created_at = ZonedDateTime.now().toString)
+    val res = for {
+      repo <- getOwner(owner).repos.find(_.name == repo)
+      pull <- repo.pulls.find(_.number == number)
+    } yield Issue(labels = pull.labels.map(Label.apply), created_at = pull.createdAt.toString)
+
+    res.get
   }
 
   val handler: PartialFunction[RequestHeader, Handler] = {

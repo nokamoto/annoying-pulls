@@ -1,3 +1,3 @@
 package github
 
-private[github] case class Owner(name: String)
+case class Owner(name: String)
