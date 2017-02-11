@@ -1,5 +1,7 @@
 # annoying-pulls
 
+[![Build Status](https://travis-ci.org/nokamoto/annoying-pulls.svg?branch=master)](https://travis-ci.org/nokamoto/annoying-pulls)
+
 Slack [#annoying-pulls](https://nokamoto.slack.com/messages/annoying-pulls)
 
 ```

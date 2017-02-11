@@ -1,0 +1,28 @@
+sudo: false
+
+dist: trusty
+
+# http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html#%28Experimental%29+Reusing+Ivy+cache
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+
+before_cache:
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+
+language: scala
+
+branches:
+  only:
+    - master
+
+scala:
+   - 2.11.8
+
+jdk:
+  - oraclejdk8
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test:compile test assembly
