@@ -11,6 +11,10 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
+val playVersion = "2.5.12"
+
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-ws" % "2.5.12",
-  "com.typesafe" % "config" % "1.3.1")
+  "com.typesafe.play" %% "play-ws" % playVersion,
+  "com.typesafe" % "config" % "1.3.1",
+  "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+  "com.typesafe.play" %% "play-netty-server" % playVersion % "test")

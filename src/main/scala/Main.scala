@@ -5,14 +5,11 @@ import github.{GithubService, GithubSetting}
 import slack.{SlackService, SlackSetting}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object Main {
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val gh = GithubSetting(config.getConfig("github"))
-    val sl = SlackSetting(config.getConfig("slack"))
-
+  def run(gh: GithubSetting, sl: SlackSetting): Future[Unit] = {
     val core = new CoreContext(system = ActorSystem(), context = global)
     val ghService = new GithubService(gh = gh, core = core)
     val slService = new SlackService(sl = sl, core = core)
@@ -28,5 +25,12 @@ object Main {
     }.andThen {
       case _ => core.shutdown()
     }
+  }
+
+  def main(args: Array[String]): Unit = {
+    val config = ConfigFactory.load()
+    val gh = GithubSetting(config.getConfig("github"))
+    val sl = SlackSetting(config.getConfig("slack"))
+    run(gh, sl)
   }
 }
