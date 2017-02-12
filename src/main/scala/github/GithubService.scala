@@ -7,9 +7,9 @@ import github.json.{Issue, Pull, Repo}
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class GithubService(gh: GithubSetting, core: CoreContext) {
+class GithubService(gh: GithubSetting, core: CoreContext)(implicit ec: ExecutionContext) {
   import core._
 
   private[this] def header(h: String, res: WSResponse): String = s"""$h: ${res.header(h).getOrElse("")}"""

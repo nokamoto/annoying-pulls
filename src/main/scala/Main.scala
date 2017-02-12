@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
 
 object Main {
   def run(gh: GithubSetting, sl: SlackSetting): Future[Unit] = {
-    val core = new CoreContext(system = ActorSystem(), context = global)
+    val core = new CoreContext(system = ActorSystem())
     val ghService = new GithubService(gh = gh, core = core)
     val slService = new SlackService(sl = sl, core = core)
 
