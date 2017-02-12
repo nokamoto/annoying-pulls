@@ -31,13 +31,12 @@ class GithubService(gh: GithubSetting, core: CoreContext) {
       println(header(LIMIT, res))
       println(header(REMAINING, res))
       println(header(RESET, res) + s"($time)")
+      println(s"${res.status} - ${res.json}")
 
-      (res, res.json.validate[A])
+      res.json.validate[A]
     }.flatMap {
-      case (_, JsSuccess(value, _)) => Future.successful(value)
-      case (res, JsError(errors)) =>
-        println(s"${res.status} - ${res.json}")
-        Future.failed(JsResultException(errors))
+      case JsSuccess(value, _) => Future.successful(value)
+      case JsError(errors) => Future.failed(JsResultException(errors))
     }
   }
 
