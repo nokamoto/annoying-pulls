@@ -29,7 +29,7 @@ class SlackService(sl: SlackSetting, core: CoreContext) {
 
   private[this] def attachment(p: PullRequest): Attachment = {
     Attachment(
-      title = s"[${p.repo.full_name}] ${p.pull.title} #${p.pull.number}",
+      title = p.attachmentTitle,
       title_link = p.pull.html_url,
       footer = p.prettyDays,
       color = color(p))
