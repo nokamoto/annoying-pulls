@@ -6,12 +6,10 @@ import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext
 
-class CoreContext(system: ActorSystem, context: ExecutionContext) {
+class CoreContext(system: ActorSystem) {
   private[this] implicit val as = system
 
   private[this] implicit val m = ActorMaterializer()
-
-  implicit val ec: ExecutionContext = context
 
   val ws: AhcWSClient = AhcWSClient()
 

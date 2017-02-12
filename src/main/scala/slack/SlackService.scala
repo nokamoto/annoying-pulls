@@ -4,9 +4,9 @@ import core.{CoreContext, PrettyOps, PullRequest}
 import play.api.libs.json.Json
 import slack.json.{Attachment, Message}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class SlackService(sl: SlackSetting, core: CoreContext) {
+class SlackService(sl: SlackSetting, core: CoreContext)(implicit ec: ExecutionContext) {
   import core._
 
   private[this] def postAttachments(text: String, attachments: List[Attachment]) = {
