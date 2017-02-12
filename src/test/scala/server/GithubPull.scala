@@ -3,6 +3,7 @@ package server
 import java.time.ZonedDateTime
 
 import core.{AttachmentTitle, DaysAgo}
+import slack.AttachmentColor.Good
 import slack.json.Attachment
 
 case class GithubPull(fullName: String, number: Int, title: String, url: String, createdAt: ZonedDateTime, labels: List[String])
@@ -23,6 +24,6 @@ case class GithubPull(fullName: String, number: Int, title: String, url: String,
       title = attachmentTitle,
       title_link = url,
       footer = footer,
-      color = "good")
+      color = Good)
   }
 }

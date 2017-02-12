@@ -2,6 +2,7 @@ package slack
 
 import core.{CoreContext, PrettyOps, PullRequest}
 import play.api.libs.json.Json
+import slack.AttachmentColor.{Danger, Good, Warning}
 import slack.json.{Attachment, Message}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,11 +20,11 @@ class SlackService(sl: SlackSetting, core: CoreContext)(implicit ec: ExecutionCo
     }
   }
 
-  private[this] def color(p: PullRequest): String = {
+  private[this] def color(p: PullRequest): AttachmentColor = {
     p.daysAgo match {
-      case ago if ago >= sl.dangerAfter => "danger"
-      case ago if ago >= sl.warningAfter => "warning"
-      case _ => "good"
+      case ago if ago >= sl.dangerAfter => Danger
+      case ago if ago >= sl.warningAfter => Warning
+      case _ => Good
     }
   }
 
