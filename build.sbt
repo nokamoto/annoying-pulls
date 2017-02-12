@@ -11,6 +11,8 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-l", "slack.SlackTest")
+
 val playVersion = "2.5.12"
 
 libraryDependencies ++= Seq(
