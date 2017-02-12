@@ -8,6 +8,7 @@ case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]
 
   def pull(number: Int, createdAt: ZonedDateTime, f: GithubPull => GithubPull): GithubRepository = {
     val p = GithubPull(
+      fullName = fullName,
       number = number,
       title = s"$number ${UUID.randomUUID().toString}",
       url = s"http://localhost/$owner/$name/pulls/$number",
