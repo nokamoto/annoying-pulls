@@ -16,4 +16,6 @@ case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]
       labels = Nil)
     copy(pulls = f(p) :: pulls)
   }
+
+  def pull(number: Int, createdAt: ZonedDateTime): GithubRepository = pull(number, createdAt, x => x)
 }

@@ -19,13 +19,15 @@ class MockServers(port: Int) {
 }
 
 object MockServers {
-  def withServers(f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = {
+  private[this] def withServers(org: Option[GithubOrg],
+                                user: Option[GithubUser],
+                                f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = {
     val servers = new MockServers(9000)
     try {
       val gh = GithubSetting(
         api = servers.github.api,
-        org = None,
-        username = None,
+        org = org.map(_.toOwner),
+        username = user.map(_.toOwner),
         excludedLabels = Nil)
 
       val sl = SlackSetting(
@@ -37,9 +39,18 @@ object MockServers {
         dangerAfter = 14.days,
         attachmentsLimit = 20)
 
+      org.foreach(servers.github.org.set)
+      user.foreach(servers.github.user.set)
+
       f(servers, gh, sl)
     } finally {
       servers.shutdown()
     }
+  }
+
+  def withServers(f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = withServers(None, None, f)
+
+  def withServers(org: GithubOrg, user: GithubUser)(f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = {
+    withServers(Some(org), Some(user), f)
   }
 }

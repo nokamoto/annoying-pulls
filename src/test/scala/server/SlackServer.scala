@@ -10,11 +10,11 @@ import slack.json.Message
 class SlackServer(port: Int) {
   val incomingWebhook: String = s"http://localhost:$port/services/${UUID.randomUUID().toString}"
 
-  val recevied: AtomicReference[Message] = new AtomicReference[Message]()
+  val received: AtomicReference[Message] = new AtomicReference[Message]()
 
   val handler: PartialFunction[RequestHeader, Handler] = {
     case POST(p"/services/$id") => Action(BodyParsers.parse.json[Message]) { req =>
-      recevied.set(req.body)
+      received.set(req.body)
       Results.Ok("")
     }
   }
