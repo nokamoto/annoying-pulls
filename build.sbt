@@ -1,5 +1,7 @@
 scalaVersion := "2.11.8"
 
+licenses := Seq("MIT License" -> url("http://www.opensource.org/licenses/mit-license"))
+
 assemblyOutputPath in assembly := file("target/annoying-pulls-0.1.jar")
 
 assemblyMergeStrategy in assembly := {
