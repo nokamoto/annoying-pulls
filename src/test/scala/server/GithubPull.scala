@@ -3,8 +3,9 @@ package server
 import java.time.ZonedDateTime
 
 import core.{AttachmentTitle, DaysAgo}
-import slack.AttachmentColor.Good
 import slack.json.Attachment
+
+import scala.concurrent.duration._
 
 case class GithubPull(fullName: String, number: Int, title: String, url: String, createdAt: ZonedDateTime, labels: List[String])
   extends DaysAgo with AttachmentTitle {
@@ -17,13 +18,19 @@ case class GithubPull(fullName: String, number: Int, title: String, url: String,
 
   override protected[this] def hashNumber: Long = number
 
-  def footer: String = prettyDays
+  private[this] def footer: String = prettyDays
 
   def attachment(owner: String, repo: String): Attachment = {
     Attachment(
       title = attachmentTitle,
       title_link = url,
       footer = footer,
-      color = Good)
+      color = color(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter))
   }
+}
+
+object GithubPull {
+  val dangerAfter: FiniteDuration = 14.days
+
+  val warningAfter: FiniteDuration = 7.days
 }
