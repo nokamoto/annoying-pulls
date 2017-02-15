@@ -2,11 +2,16 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import MainSpec._
+import github.GithubSetting
 import org.scalatest.FlatSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import server._
+import slack.AttachmentColor.{Danger, Good, Warning}
+import slack.{AttachmentColor, SlackSetting}
 import slack.json.{Attachment, Message}
+
+import scala.concurrent.duration._
 
 class MainSpec extends FlatSpec with ScalaFutures {
   private[this] implicit val defaultPatience =
@@ -20,10 +25,11 @@ class MainSpec extends FlatSpec with ScalaFutures {
     }
   }
 
-  private[this] def received(org: GithubOrg, user: GithubUser)(f: Message => Unit): Unit = {
+  private[this] def received(org: GithubOrg, user: GithubUser)
+                            (f: (Message, GithubSetting, SlackSetting) => Unit): Unit = {
     MockServers.withServers(org, user) { (servers, gh, sl) =>
       whenReady(Main.run(gh, sl)) { _ =>
-        f(servers.slack.received.get())
+        f(servers.slack.received.get(), gh, sl)
       }
     }
   }
@@ -45,7 +51,7 @@ class MainSpec extends FlatSpec with ScalaFutures {
 
     val expected = pulls(org, user)
 
-    received(org, user) { message =>
+    received(org, user) { (message, _, _) =>
       assert(message.text === "4 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
@@ -58,7 +64,31 @@ class MainSpec extends FlatSpec with ScalaFutures {
   }
 
   it should "post pull requests to incoming webhook with color" in {
-    pending
+    val dangerAfter = now.minusDays(14)
+    val warningAfter = now.minusDays(7)
+
+    val org = githubOrg(
+      repo1 => repo1.pull(1, warningAfter.plusDays(1)).pull(2, dangerAfter.plusDays(1)))
+
+    val user = githubUser(
+      repo2 => repo2.pull(3, warningAfter).pull(4, dangerAfter))
+
+    val expected = pulls(org, user)
+
+    def colorNumbers(color: AttachmentColor) = expected.filter(_.attachment.color == color).map(_.pull.number)
+
+    received(org, user) { (message, _, slack) =>
+      assert(message.text === "4 pull requests opened")
+      assert(message.attachments === expected.map(_.attachment))
+
+      assert(colorNumbers(Good) === 1L :: Nil)
+
+      assert(slack.warningAfter === 7.days)
+      assert(colorNumbers(Warning) === 2L :: 3L :: Nil)
+
+      assert(slack.dangerAfter ===  14.days)
+      assert(colorNumbers(Danger) === 4L :: Nil)
+    }
   }
 
   it should "post pull requests to incoming webhook filtered by excluded labels" in {

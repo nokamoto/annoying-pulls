@@ -4,7 +4,6 @@ import github.GithubSetting
 import play.api.Mode
 import play.core.server.{NettyServer, ServerConfig}
 import slack.SlackSetting
-import scala.concurrent.duration._
 
 class MockServers(port: Int) {
   val github = new GithubServer(port)
@@ -35,8 +34,8 @@ object MockServers {
         channel = None,
         username = None,
         iconEmoji = None,
-        warningAfter = 7.days,
-        dangerAfter = 14.days,
+        warningAfter = GithubPull.warningAfter,
+        dangerAfter = GithubPull.dangerAfter,
         attachmentsLimit = 20)
 
       org.foreach(servers.github.org.set)
