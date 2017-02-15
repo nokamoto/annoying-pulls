@@ -27,6 +27,8 @@ case class GithubPull(fullName: String, number: Int, title: String, url: String,
       footer = footer,
       color = color(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter))
   }
+
+  def labeled(label: String): GithubPull = copy(labels = label :: labels)
 }
 
 object GithubPull {

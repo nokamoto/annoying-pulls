@@ -92,7 +92,23 @@ class MainSpec extends FlatSpec with ScalaFutures {
   }
 
   it should "post pull requests to incoming webhook filtered by excluded labels" in {
-    pending
+    val wontfix = "wontfix"
+    val wip = "wip"
+
+    val org = githubOrg(repo =>
+      repo.pull(1, now, _.labeled(wontfix)).pull(2, now, _.labeled(wip)).pull(3, now, _.labeled("bug")))
+
+    val user = githubUser(empty => empty)
+
+    val expected = pulls(org, user)
+
+    received(org, user) { (message, github, _) =>
+      assert(message.text === "1 pull request opened")
+
+      assert(github.excludedLabels.contains(wontfix))
+      assert(github.excludedLabels.contains(wip))
+      assert(message.attachments === expected.filter(_.pull.labels.contains("bug")).map(_.attachment))
+    }
   }
 
   it should "post pull requests to incoming webhook suppressed by attachments limit" in {
