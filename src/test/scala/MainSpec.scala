@@ -95,8 +95,22 @@ class MainSpec extends FlatSpec with ScalaFutures {
     pending
   }
 
-  it should "post pull requests to incoming webhook surpressed by attachments limit" in {
-    pending
+  it should "post pull requests to incoming webhook suppressed by attachments limit" in {
+    val org = githubOrg { repo =>
+      (0 until 30).zipWithIndex.foldLeft(repo) { case (r, (daysAgo, number)) =>
+        r.pull(number, now.minusDays(daysAgo))
+      }
+    }
+
+    val user = githubUser(empty => empty)
+
+    val expected = pulls(org, user)
+
+    received(org, user) { (message, _, slack) =>
+      assert(slack.attachmentsLimit === 20)
+      assert(message.text === "30 pull requests opened (10 hidden)")
+      assert(message.attachments === expected.map(_.attachment).take(slack.attachmentsLimit))
+    }
   }
 }
 
