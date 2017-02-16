@@ -1,6 +1,6 @@
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import core.CoreContext
+import core.{CoreContext, IncomingWebhookService}
 import github.{GithubService, GithubSetting}
 import slack.{SlackService, SlackSetting}
 
@@ -12,7 +12,8 @@ object Main {
   def run(gh: GithubSetting, sl: SlackSetting): Future[Unit] = {
     val core = new CoreContext(system = ActorSystem())
     val ghService = new GithubService(gh = gh, core = core)
-    val slService = new SlackService(sl = sl, core = core)
+    val iwService = new IncomingWebhookService(gh = gh, sl = sl)
+    val slService = new SlackService(sl = sl, core = core, service = iwService)
 
     val future = for {
       pulls <- ghService.pulls()

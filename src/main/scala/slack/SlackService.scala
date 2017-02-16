@@ -1,40 +1,26 @@
 package slack
 
-import core.{CoreContext, PrettyOps, PullRequest}
+import core.{CoreContext, IncomingWebhookService, PullRequest}
 import play.api.libs.json.Json
-import slack.json.{Attachment, Message}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SlackService(sl: SlackSetting, core: CoreContext)(implicit ec: ExecutionContext) {
+class SlackService(sl: SlackSetting, core: CoreContext, service: IncomingWebhookService)(implicit ec: ExecutionContext) {
   import core._
-
-  private[this] def postAttachments(text: String, attachments: List[Attachment]) = {
-    val json = Message(username = sl.username, icon_emoji = sl.iconEmoji, channel = sl.channel, text = text, attachments = attachments)
-
-    println(sl.incomingWebhook)
-
-    ws.url(sl.incomingWebhook).post(Json.toJson(json)).map { res =>
-      println(s"${res.status} - ${res.body}")
-    }
-  }
-  private[this] def attachment(p: PullRequest): Attachment = {
-    Attachment(
-      title = p.attachmentTitle,
-      title_link = p.pull.html_url,
-      footer = p.prettyDays,
-      color = p.color(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter))
-  }
 
   /**
     * post the pull requests attachments to the slack incoming webhook.
     */
   def webhook(pulls: List[PullRequest]): Future[Unit] = {
-    val size = pulls.size
-    val text = s"$size pull request${PrettyOps.s(size)} opened"
-    val hidden = if (size > sl.attachmentsLimit) s" (${size - sl.attachmentsLimit} hidden)" else ""
-    postAttachments(
-      text + hidden,
-      pulls.sortBy(_.createdAt.toEpochSecond).take(sl.attachmentsLimit).map(attachment))
+    println(sl.incomingWebhook)
+
+    ws.url(sl.incomingWebhook).post(Json.toJson(service.incomingWebhook(pulls))).flatMap {
+      case res if res.status / 100 == 2 =>
+        println(s"${res.status} - ${res.body}")
+        Future.successful(())
+
+      case res =>
+        Future.failed(new RuntimeException(s"${res.status} - ${res.body}"))
+    }
   }
 }

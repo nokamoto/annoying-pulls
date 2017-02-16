@@ -9,7 +9,7 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import server._
 import slack.AttachmentColor.{Danger, Good, Warning}
 import slack.{AttachmentColor, SlackSetting}
-import slack.json.{Attachment, Message}
+import slack.json.{Attachment, IncomingWebhook}
 
 import scala.concurrent.duration._
 
@@ -17,7 +17,7 @@ class MainSpec extends FlatSpec with ScalaFutures {
   private[this] implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
-  private[this] def received(f: Message => Unit): Unit = {
+  private[this] def received(f: IncomingWebhook => Unit): Unit = {
     MockServers.withServers { (servers, gh, sl) =>
       whenReady(Main.run(gh, sl)) { _ =>
         f(servers.slack.received.get())
@@ -26,7 +26,7 @@ class MainSpec extends FlatSpec with ScalaFutures {
   }
 
   private[this] def received(org: GithubOrg, user: GithubUser)
-                            (f: (Message, GithubSetting, SlackSetting) => Unit): Unit = {
+                            (f: (IncomingWebhook, GithubSetting, SlackSetting) => Unit): Unit = {
     MockServers.withServers(org, user) { (servers, gh, sl) =>
       whenReady(Main.run(gh, sl)) { _ =>
         f(servers.slack.received.get(), gh, sl)
