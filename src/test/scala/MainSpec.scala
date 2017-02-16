@@ -184,9 +184,10 @@ object MainSpec {
 
   private def pulls(org: GithubOrg, user: GithubUser): List[PullAttachment] = {
     val res = for {
-      (owner, repo) <- org.ownerRepos ++ user.ownerRepos
+      repo <- org.repos ++ user.repos
       pull <- repo.pulls
-    } yield PullAttachment(pull, pull.attachment(owner = owner, repo = repo.name))
+    } yield PullAttachment(pull, pull.attachment)
+
     res.sortBy(_.pull.createdAt.toEpochSecond)
   }
 }

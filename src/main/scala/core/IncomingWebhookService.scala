@@ -2,7 +2,7 @@ package core
 
 import github.GithubSetting
 import slack.SlackSetting
-import slack.json.{Attachment, IncomingWebhook}
+import slack.json.IncomingWebhook
 
 class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
   private[this] def exclude(pulls: List[PullRequest]) = {
@@ -24,14 +24,6 @@ class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
     text + print(extended.nonEmpty, s" ($extended)")
   }
 
-  private[this] def attachment(pull: PullRequest): Attachment = {
-    Attachment(
-      title = pull.attachmentTitle,
-      title_link = pull.pull.html_url,
-      footer = pull.prettyDays,
-      color = pull.color(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter))
-  }
-
   /**
     * convert the [[PullRequest]] list to [[IncomingWebhook]].
     */
@@ -41,6 +33,9 @@ class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
       icon_emoji = sl.iconEmoji,
       channel = sl.channel,
       text = text(pulls),
-      attachments = exclude(pulls).sortBy(_.createdAt.toEpochSecond).take(sl.attachmentsLimit).map(attachment))
+      attachments = exclude(pulls).
+        sortBy(_.createdAt.toEpochSecond).
+        take(sl.attachmentsLimit).
+        map(_.like.attachment.make(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter)))
   }
 }
