@@ -4,14 +4,14 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import core.{CoreContext, PullRequest}
+import core.{CoreContext, IncomingWebhookService, PullRequest}
+import github.GithubSetting
 import github.json.{Issue, Pull, Repo}
 import org.scalatest.FlatSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import slack.SlackServiceSpec.{dummyPull, settings}
 
 /**
@@ -63,8 +63,10 @@ object SlackServiceSpec {
     val now = ZonedDateTime.now()
     val config = ConfigFactory.load()
     val sl = SlackSetting(config.getConfig("slack"))
+    val gh = GithubSetting(config.getConfig("github"))
     val core = new CoreContext(system = ActorSystem())
-    val service = new SlackService(sl = sl, core = core)
+    val iw = new IncomingWebhookService(gh = gh, sl = sl)
+    val service = new SlackService(sl = sl, core = core, service = iw)
     (now, core, service)
   }
 }
