@@ -10,7 +10,14 @@ import slack.json.Attachment
 
 import scala.concurrent.duration._
 
-case class PullLike(fullName: String, title: String, htmlLink: String, number: Long, createdAt: ZonedDateTime) {
+case class PullLike(fullName: String,
+                    title: String,
+                    htmlLink: String,
+                    number: Long,
+                    createdAt: ZonedDateTime,
+                    login: String,
+                    avatarUrl: String) {
+
   private[this] def daysAgo: FiniteDuration = ChronoUnit.DAYS.between(createdAt, ZonedDateTime.now()).days
 
   private[this] def prettyDays: String = {
@@ -30,7 +37,8 @@ case class PullLike(fullName: String, title: String, htmlLink: String, number: L
   val attachment = AttachmentLike(
     title = s"[$fullName] $title #$number",
     titleLink = htmlLink,
-    footer = prettyDays,
+    footer = s"$login opened $prettyDays",
+    footerIcon = avatarUrl,
     color = color)
 }
 
@@ -38,9 +46,15 @@ object PullLike {
   case class AttachmentLike(title: String,
                             titleLink: String,
                             footer: String,
+                            footerIcon: String,
                             color: (FiniteDuration, FiniteDuration) => AttachmentColor) {
     def make(warningAfter: FiniteDuration, dangerAfter: FiniteDuration): Attachment = {
-      Attachment(title = title, title_link = titleLink, footer = footer, color = color(warningAfter, dangerAfter))
+      Attachment(
+        title = title,
+        title_link = titleLink,
+        footer = footer,
+        color = color(warningAfter, dangerAfter),
+        footer_icon = footerIcon)
     }
   }
 }
