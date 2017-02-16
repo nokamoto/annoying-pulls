@@ -7,11 +7,26 @@ import slack.json.Attachment
 
 import scala.concurrent.duration._
 
-case class GithubPull(fullName: String, number: Int, title: String, url: String, createdAt: ZonedDateTime, labels: List[String]) {
-  val attachment: Attachment = {
-    PullLike(fullName = fullName, title = title, htmlLink = url, number = number, createdAt = createdAt).
-      attachment.make(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter)
+case class GithubPull(fullName: String,
+                      number: Int,
+                      title: String,
+                      url: String,
+                      createdAt: ZonedDateTime,
+                      labels: List[String],
+                      login: String, avatarUrl: String) {
+
+  private[this] val like = {
+    PullLike(
+      fullName = fullName,
+      title = title,
+      htmlLink = url,
+      number = number,
+      createdAt = createdAt,
+      login = login,
+      avatarUrl = avatarUrl)
   }
+
+  val attachment: Attachment = like.attachment.make(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter)
 
   def labeled(label: String): GithubPull = copy(labels = label :: labels)
 }

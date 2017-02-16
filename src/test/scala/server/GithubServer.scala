@@ -2,7 +2,7 @@ package server
 
 import java.util.concurrent.atomic.AtomicReference
 
-import github.json.{Issue, Label, Pull, Repo}
+import github.json._
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.{Handler, RequestHeader, _}
 import play.api.routing.sird._
@@ -40,7 +40,12 @@ class GithubServer(port: Int) {
     val res = for {
       repo <- getOwner(owner).repos.find(_.name == repo)
       pull <- repo.pulls.find(_.number == number)
-    } yield Issue(labels = pull.labels.map(Label.apply), created_at = pull.createdAt.toString)
+    } yield {
+      Issue(
+        labels = pull.labels.map(Label.apply),
+        created_at = pull.createdAt.toString,
+        user = User(login = pull.login, avatar_url = pull.avatarUrl))
+    }
 
     res.get
   }

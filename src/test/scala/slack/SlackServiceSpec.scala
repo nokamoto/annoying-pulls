@@ -1,12 +1,13 @@
 package slack
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import core.{CoreContext, IncomingWebhookService, PullRequest}
 import github.GithubSetting
-import github.json.{Issue, Pull, Repo}
+import github.json.{Issue, Pull, Repo, User}
 import org.scalatest.FlatSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -49,6 +50,8 @@ class SlackServiceSpec extends FlatSpec with ScalaFutures {
 
 object SlackServiceSpec {
   def dummyPull(prefix: String, number: Long, createdAt: ZonedDateTime): PullRequest = {
+    val user = User(login = UUID.randomUUID().toString, avatar_url = "https://avatars.githubusercontent.com/u/4374383?v=3")
+
     PullRequest(
       repo = Repo(name = ":repo", full_name = ":owner/:repo"),
       pull = Pull(
@@ -56,7 +59,7 @@ object SlackServiceSpec {
         title = s"$prefix - :title",
         issue_url = "https://localhost/:owner/:repo/issues/:number",
         number = number),
-      issue = Issue(labels = Nil, created_at = createdAt.toString))
+      issue = Issue(labels = Nil, created_at = createdAt.toString, user = user))
   }
 
   def settings: (ZonedDateTime, CoreContext, SlackService) = {
