@@ -94,20 +94,21 @@ class MainSpec extends FlatSpec with ScalaFutures {
   it should "post pull requests to incoming webhook filtered by excluded labels" in {
     val wontfix = "wontfix"
     val wip = "wip"
+    val bug = "bug"
 
     val org = githubOrg(repo =>
-      repo.pull(1, now, _.labeled(wontfix)).pull(2, now, _.labeled(wip)).pull(3, now, _.labeled("bug")))
+      repo.pull(1, now, _.labeled(wontfix)).pull(2, now, _.labeled(wip)).pull(3, now, _.labeled(bug)))
 
     val user = githubUser(empty => empty)
 
     val expected = pulls(org, user)
 
     received(org, user) { (message, github, _) =>
-      assert(message.text === "1 pull request opened")
+      assert(message.text === "3 pull requests opened (2 excluded)")
 
       assert(github.excludedLabels.contains(wontfix))
       assert(github.excludedLabels.contains(wip))
-      assert(message.attachments === expected.filter(_.pull.labels.contains("bug")).map(_.attachment))
+      assert(message.attachments === expected.filter(_.pull.labels.contains(bug)).map(_.attachment))
     }
   }
 
@@ -126,6 +127,30 @@ class MainSpec extends FlatSpec with ScalaFutures {
       assert(slack.attachmentsLimit === 20)
       assert(message.text === "30 pull requests opened (10 hidden)")
       assert(message.attachments === expected.map(_.attachment).take(slack.attachmentsLimit))
+    }
+  }
+
+  it should "post pull requests to incoming webhook suppressed and filtered" in {
+    val wontfix = "wontfix"
+
+    val org = githubOrg { repo =>
+      (0 until 30).zipWithIndex.foldLeft(repo) { case (r, (daysAgo, number)) =>
+        if (number < 5) {
+          r.pull(number, now.minusDays(daysAgo), _.labeled(wontfix))
+        } else {
+          r.pull(number, now.minusDays(daysAgo))
+        }
+      }
+    }
+
+    val user = githubUser(empty => empty)
+
+    val expected = pulls(org, user)
+
+    received(org, user) { (message, _, slack) =>
+      assert(message.text === "30 pull requests opened (5 hidden, 5 excluded)")
+      assert(message.attachments === expected.
+        filterNot(_.pull.labels.contains(wontfix)).take(slack.attachmentsLimit).map(_.attachment))
     }
   }
 }

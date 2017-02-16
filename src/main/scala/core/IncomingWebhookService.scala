@@ -5,11 +5,23 @@ import slack.SlackSetting
 import slack.json.{Attachment, IncomingWebhook}
 
 class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
+  private[this] def exclude(pulls: List[PullRequest]) = {
+    pulls.filterNot(_.issue.labels.exists(label => gh.excludedLabels.contains(label.name)))
+  }
+
+  private[this] def print(cond: Boolean, s: String): String = if (cond) s else ""
+
   private[this] def text(pulls: List[PullRequest]): String = {
     val size = pulls.size
+    val excludedSize = exclude(pulls).size
+
     val text = s"$size pull request${PrettyOps.s(size)} opened"
-    val hidden = if (size > sl.attachmentsLimit) s" (${size - sl.attachmentsLimit} hidden)" else ""
-    text + hidden
+
+    val hidden = print(excludedSize > sl.attachmentsLimit, s"${excludedSize - sl.attachmentsLimit} hidden")
+    val excluded = print(size > excludedSize, s"${size - excludedSize} excluded")
+    val extended = hidden + print(hidden.nonEmpty && excluded.nonEmpty, ", ") + print(excluded.nonEmpty, excluded)
+
+    text + print(extended.nonEmpty, s" ($extended)")
   }
 
   private[this] def attachment(pull: PullRequest): Attachment = {
@@ -29,6 +41,6 @@ class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
       icon_emoji = sl.iconEmoji,
       channel = sl.channel,
       text = text(pulls),
-      attachments = pulls.sortBy(_.createdAt.toEpochSecond).take(sl.attachmentsLimit).map(attachment))
+      attachments = exclude(pulls).sortBy(_.createdAt.toEpochSecond).take(sl.attachmentsLimit).map(attachment))
   }
 }

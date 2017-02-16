@@ -73,8 +73,7 @@ class GithubService(gh: GithubSetting, core: CoreContext)(implicit ec: Execution
       issues <- Future.sequence(pulls.flatten.map { case (repo, pull) => getIssue(repo, pull) })
     } yield {
       issues.
-        map { case (repo, pull, issue) => PullRequest(repo = repo, pull = pull, issue = issue) }.
-        filterNot(_.issue.labels.exists(label => gh.excludedLabels.contains(label.name)))
+        map { case (repo, pull, issue) => PullRequest(repo = repo, pull = pull, issue = issue) }
     }
   }
 }
