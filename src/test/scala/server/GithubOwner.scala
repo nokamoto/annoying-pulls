@@ -10,6 +10,4 @@ trait GithubOwner {
   protected[this] def newRepo(name: String) = GithubRepository(owner = owner, name = name, pulls = Nil)
 
   def toOwner: Owner = Owner(owner)
-
-  def ownerRepos: List[(String, GithubRepository)] = repos.map(repo => (owner, repo))
 }
