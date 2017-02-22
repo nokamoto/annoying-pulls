@@ -63,13 +63,12 @@ object SlackServiceSpec {
   }
 
   def settings: (ZonedDateTime, CoreContext, SlackService) = {
-    val now = ZonedDateTime.now()
     val config = ConfigFactory.load()
     val sl = SlackSetting(config.getConfig("slack"))
     val gh = GithubSetting(config.getConfig("github"))
     val core = new CoreContext(system = ActorSystem())
-    val iw = new IncomingWebhookService(gh = gh, sl = sl)
+    val iw = new IncomingWebhookService(core = core, gh = gh, sl = sl)
     val service = new SlackService(sl = sl, core = core, service = iw)
-    (now, core, service)
+    (core.now, core, service)
   }
 }

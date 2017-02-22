@@ -4,7 +4,7 @@ import github.GithubSetting
 import slack.SlackSetting
 import slack.json.IncomingWebhook
 
-class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
+class IncomingWebhookService(core: CoreContext, gh: GithubSetting, sl: SlackSetting) {
   private[this] def exclude(pulls: List[PullRequest]) = {
     pulls.filterNot(_.issue.labels.exists(label => gh.excludedLabels.contains(label.name)))
   }
@@ -36,6 +36,6 @@ class IncomingWebhookService(gh: GithubSetting, sl: SlackSetting) {
       attachments = exclude(pulls).
         sortBy(_.createdAt.toEpochSecond).
         take(sl.attachmentsLimit).
-        map(_.like.attachment.make(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter)))
+        map(_.like.attachment(core.now).make(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter)))
   }
 }
