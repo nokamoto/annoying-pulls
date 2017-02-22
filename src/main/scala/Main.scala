@@ -9,10 +9,9 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object Main {
-  def run(gh: GithubSetting, sl: SlackSetting): Future[Unit] = {
-    val core = new CoreContext(system = ActorSystem())
+  def run(core: CoreContext, gh: GithubSetting, sl: SlackSetting): Future[Unit] = {
     val ghService = new GithubService(gh = gh, core = core)
-    val iwService = new IncomingWebhookService(gh = gh, sl = sl)
+    val iwService = new IncomingWebhookService(core = core, gh = gh, sl = sl)
     val slService = new SlackService(sl = sl, core = core, service = iwService)
 
     val future = for {
@@ -23,15 +22,15 @@ object Main {
     future.andThen {
       case Success(_) => println("done.")
       case Failure(e) => e.printStackTrace()
-    }.andThen {
-      case _ => core.shutdown()
     }
   }
 
   def main(args: Array[String]): Unit = {
+    val core = new CoreContext(system = ActorSystem())
     val config = ConfigFactory.load()
     val gh = GithubSetting(config.getConfig("github"))
     val sl = SlackSetting(config.getConfig("slack"))
-    run(gh, sl)
+
+    run(core, gh, sl).andThen { case _ => core.shutdown() }
   }
 }

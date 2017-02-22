@@ -26,7 +26,9 @@ case class GithubPull(fullName: String,
       avatarUrl = avatarUrl)
   }
 
-  val attachment: Attachment = like.attachment.make(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter)
+  def attachment(now: ZonedDateTime): Attachment = {
+    like.attachment(now).make(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter)
+  }
 
   def labeled(label: String): GithubPull = copy(labels = label :: labels)
 }
