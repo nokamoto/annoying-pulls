@@ -18,16 +18,22 @@ case class PullLike(fullName: String,
                     login: String,
                     avatarUrl: String) {
 
-  private[this] def daysAgo(now: ZonedDateTime): FiniteDuration = ChronoUnit.DAYS.between(createdAt, now).days
+  private[this] def ago(unit: ChronoUnit, now: ZonedDateTime): Long = unit.between(createdAt, now)
+
+  private[this] def pretty(t: => Long, unit: String, f: => String): String = {
+    if (t > 0) s"$t $unit${PrettyOps.s(t)} ago" else f
+  }
 
   private[this] def prettyDays(now: ZonedDateTime): String = {
-    val d = daysAgo(now).toDays
-    val s = PrettyOps.s(d)
-    s"$d day$s ago"
+    def seconds: String = pretty(ago(ChronoUnit.SECONDS, now), "second", "0 second ago")
+    def minutes: String = pretty(ago(ChronoUnit.MINUTES, now), "minute", seconds)
+    def hours: String = pretty(ago(ChronoUnit.HOURS, now), "hour", minutes)
+
+    pretty(ago(ChronoUnit.DAYS, now), "day", hours)
   }
 
   private[this] def color(now: ZonedDateTime, warningAfter: FiniteDuration, dangerAfter: FiniteDuration): AttachmentColor = {
-    daysAgo(now) match {
+    ago(ChronoUnit.DAYS, now).days match {
       case ago if ago >= dangerAfter => Danger
       case ago if ago >= warningAfter => Warning
       case _ => Good
