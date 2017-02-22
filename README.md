@@ -45,7 +45,7 @@ slack {
 | api | Yes | https://developer.github.com/v3/#schema |
 | org | No | https://developer.github.com/v3/repos/#list-organization-repositories |
 | username | No | https://developer.github.com/v3/repos/#list-user-repositories |
-| exclude-labels | Yes | |
+| exclude-labels | Yes | filter pull requests by label |
 
 ### Slack
 | key | mandatory | |
@@ -54,6 +54,6 @@ slack {
 | channel | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
 | username | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
 | icon-emoji | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
-| warning-after | Yes | |
-| danger-after | Yes | |
-| attachments-limit | Yes | |
+| warning-after | Yes | attach pull requests `warning-after` old with `warning` color |
+| danger-after | Yes | attach pull requests `danger-after` old with `danger` color |
+| attachments-limit | Yes | never send more than [20](https://api.slack.com/docs/message-guidelines) attachments |
