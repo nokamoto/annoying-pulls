@@ -41,9 +41,20 @@ class SlackServiceSpec extends FlatSpec with ScalaFutures {
   it should "post good, warning, danger pulls to incoming webhook" taggedAs SlackTest in {
     val (now, core, service) = settings
     val pulls =
-      dummyPull("good", 1, now) ::
+      dummyPull("good", 1, now.minusDays(1)) ::
       dummyPull("warning", 2, now.minusDays(7)) ::
       dummyPull("danger", 3, now.minusDays(14)) :: Nil
+    post(service, core, pulls)
+  }
+
+  it should "post pulls created before a day to incoming webhook" taggedAs SlackTest in {
+    val (now, core, service) = settings
+    val pulls =
+      dummyPull("created at -23:59:59", 1, now.minusDays(1).plusSeconds(1)) ::
+        dummyPull("created at -00:59:59", 2, now.minusHours(1).plusSeconds(1)) ::
+        dummyPull("created at -00:00:59", 3, now.minusMinutes(1).plusSeconds(1)) ::
+        dummyPull("created at -00:00:00", 4, now) ::
+        dummyPull("(unexpected) created at +00:00:01", 5, now.plusSeconds(1)) :: Nil
     post(service, core, pulls)
   }
 }
