@@ -3,6 +3,7 @@ package core
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
+import core.Context.StaticContext
 import slack.AttachmentColor
 import slack.AttachmentColor.{Danger, Good, Warning}
 import slack.json.Attachment
@@ -40,11 +41,11 @@ case class PullLike(fullName: String,
     }
   }
 
-  private[this] def commentsOpt(context: Context): String = {
+  private[this] def commentsOpt(context: StaticContext): String = {
     if (comments > 0) s"   ${context.slack.commentIconEmoji} $comments" else ""
   }
 
-  def attachment(context: Context): Attachment = {
+  def attachment(context: StaticContext): Attachment = {
     import context._
 
     Attachment(

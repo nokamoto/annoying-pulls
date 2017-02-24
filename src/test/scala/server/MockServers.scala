@@ -2,7 +2,6 @@ package server
 
 import java.time.ZonedDateTime
 
-import akka.actor.ActorSystem
 import core.{Context, GithubSetting, SlackSetting}
 import play.api.Mode
 import play.core.server.{NettyServer, ServerConfig}
@@ -44,7 +43,7 @@ object MockServers {
       attachmentsLimit = 20,
       commentIconEmoji = ":speech_balloon:")
 
-    val context = new Context(system = ActorSystem(), now = now, github = github, slack = slack)
+    val context = new Context(now = now, github = github, slack = slack)
 
     try {
       org.foreach(servers.github.org.set)

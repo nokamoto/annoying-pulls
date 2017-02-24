@@ -1,8 +1,9 @@
 package core
 
+import core.Context.StaticContext
 import slack.json.IncomingWebhook
 
-class IncomingWebhookService(context: Context) {
+class IncomingWebhookService(context: StaticContext) {
   import context._
 
   private[this] def exclude(pulls: List[PullRequest]) = {
