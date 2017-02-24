@@ -3,9 +3,8 @@ import java.util.UUID
 
 import MainSpec._
 import core.Context
+import helper.DefaultFutures
 import org.scalatest.FlatSpec
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
 import server._
 import slack.AttachmentColor
 import slack.AttachmentColor.{Danger, Good, Warning}
@@ -13,10 +12,7 @@ import slack.json.{Attachment, IncomingWebhook}
 
 import scala.concurrent.duration._
 
-class MainSpec extends FlatSpec with ScalaFutures {
-  private[this] implicit val defaultPatience =
-    PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
-
+class MainSpec extends FlatSpec with DefaultFutures {
   private[this] val now = ZonedDateTime.now()
 
   private[this] def received(f: IncomingWebhook => Unit): Unit = {
@@ -57,11 +53,7 @@ class MainSpec extends FlatSpec with ScalaFutures {
       assert(message.text === "4 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
-      expected.foldLeft(0L) { case (last, cur) =>
-        val sec = cur.pull.createdAt.toEpochSecond
-        assert(last <= sec)
-        sec
-      }
+      assert(expected.map(_.pull.number) === 2 :: 3 :: 4 :: 1 :: Nil)
     }
   }
 
@@ -160,25 +152,17 @@ class MainSpec extends FlatSpec with ScalaFutures {
 object MainSpec {
   private case class PullAttachment(pull: GithubPull, attachment: Attachment)
 
-  private[this] implicit class Update[A](a: A) {
-    def update(f: A => A): A = f(a)
-  }
-
-  private[this] implicit class Attachments(s: Seq[(GithubPull, Attachment)]) {
-    def attachments: List[Attachment] = {
-      s.sortBy { case (pull, _) => pull.createdAt.toEpochSecond }.map { case (_, attachment) => attachment }.toList
-    }
-  }
+  private[this] def update[A](a: A, f: A => A): A = f(a)
 
   private def githubOrg(fs: (GithubRepository => GithubRepository)*): GithubOrg = {
     fs.foldLeft(GithubOrg(owner = s"org-${UUID.randomUUID()}")) { case (org, f) =>
-      org.update(_.repo(s"repo-${UUID.randomUUID()}", f))
+      update[GithubOrg](org, _.repo(s"repo-${UUID.randomUUID()}", f))
     }
   }
 
   private def githubUser(fs: (GithubRepository => GithubRepository)*): GithubUser = {
     fs.foldLeft(GithubUser(owner = s"user-${UUID.randomUUID()}")) { case (user, f) =>
-      user.update(_.repo(s"repo-${UUID.randomUUID()}", f))
+      update[GithubUser](user, _.repo(s"repo-${UUID.randomUUID()}", f))
     }
   }
 
