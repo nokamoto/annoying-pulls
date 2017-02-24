@@ -14,5 +14,6 @@ case class PullRequest(repo: Repo, pull: Pull, issue: Issue) {
     number = pull.number,
     createdAt = createdAt,
     login = issue.user.login,
-    avatarUrl = issue.user.avatar_url)
+    avatarUrl = issue.user.avatar_url,
+    comments = issue.comments)
 }

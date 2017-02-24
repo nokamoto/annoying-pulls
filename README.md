@@ -30,6 +30,8 @@ slack {
 
   icon-emoji = ":anger:"
 
+  comment-icon-emoji = ":speech_balloon:"
+
   warning-after = 7 days
 
   danger-after = 14 days
@@ -54,6 +56,7 @@ slack {
 | channel | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
 | username | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
 | icon-emoji | No | https://api.slack.com/incoming-webhooks#customizations_for_custom_integrations |
-| warning-after | Yes | attach pull requests `warning-after` old with `warning` color |
-| danger-after | Yes | attach pull requests `danger-after` old with `danger` color |
+| comment-icon-emoji | Yes | customize a comment icon in footer |
+| warning-after | Yes | attach n days old pull requests with `warning` color |
+| danger-after | Yes | attach n days old pull requests with `danger` color |
 | attachments-limit | Yes | never send more than [20](https://api.slack.com/docs/message-guidelines) attachments |

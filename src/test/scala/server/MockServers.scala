@@ -41,7 +41,8 @@ object MockServers {
       iconEmoji = None,
       warningAfter = 7.days,
       dangerAfter = 14.days,
-      attachmentsLimit = 20)
+      attachmentsLimit = 20,
+      commentIconEmoji = ":speech_balloon:")
 
     val context = new Context(system = ActorSystem(), now = now, github = github, slack = slack)
 

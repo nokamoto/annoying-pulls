@@ -3,6 +3,8 @@ package server
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import scala.util.Random
+
 case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]) {
   val fullName = s"$owner/$name"
 
@@ -17,7 +19,8 @@ case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]
       createdAt = createdAt,
       labels = Nil,
       login = login,
-      avatarUrl = s"http://localhost/$login/avatar")
+      avatarUrl = s"http://localhost/$login/avatar",
+      comments = Random.nextInt(10))
 
     copy(pulls = f(p) :: pulls)
   }
