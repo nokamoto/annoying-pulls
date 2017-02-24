@@ -3,7 +3,6 @@ package core
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-import core.PullLike.AttachmentLike
 import slack.AttachmentColor
 import slack.AttachmentColor.{Danger, Good, Warning}
 import slack.json.Attachment
@@ -40,27 +39,14 @@ case class PullLike(fullName: String,
     }
   }
 
-  def attachment(now: ZonedDateTime) = AttachmentLike(
-    title = s"[$fullName] $title #$number",
-    titleLink = htmlLink,
-    footer = s"$login opened ${prettyDays(now)}",
-    footerIcon = avatarUrl,
-    color = color(now, _, _))
-}
+  def attachment(context: Context): Attachment = {
+    import context._
 
-object PullLike {
-  case class AttachmentLike(title: String,
-                            titleLink: String,
-                            footer: String,
-                            footerIcon: String,
-                            color: (FiniteDuration, FiniteDuration) => AttachmentColor) {
-    def make(warningAfter: FiniteDuration, dangerAfter: FiniteDuration): Attachment = {
-      Attachment(
-        title = title,
-        title_link = titleLink,
-        footer = footer,
-        color = color(warningAfter, dangerAfter),
-        footer_icon = footerIcon)
-    }
+    Attachment(
+      title = s"[$fullName] $title #$number",
+      title_link = htmlLink,
+      footer = s"$login opened ${prettyDays(now)}",
+      color = color(now, slack.warningAfter, slack.dangerAfter),
+      footer_icon = avatarUrl)
   }
 }

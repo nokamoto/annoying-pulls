@@ -36,6 +36,6 @@ class IncomingWebhookService(context: Context) {
       attachments = exclude(pulls).
         sortBy(_.createdAt.toEpochSecond).
         take(slack.attachmentsLimit).
-        map(_.like.attachment(now).make(warningAfter = slack.warningAfter, dangerAfter = slack.dangerAfter)))
+        map(_.like.attachment(context)))
   }
 }

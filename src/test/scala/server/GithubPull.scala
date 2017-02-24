@@ -24,9 +24,7 @@ case class GithubPull(fullName: String,
       avatarUrl = avatarUrl)
   }
 
-  def attachment(context: Context): Attachment = {
-    like.attachment(context.now).make(warningAfter = context.slack.warningAfter, dangerAfter = context.slack.dangerAfter)
-  }
+  def attachment(context: Context): Attachment = like.attachment(context)
 
   def labeled(label: String): GithubPull = copy(labels = label :: labels)
 }
