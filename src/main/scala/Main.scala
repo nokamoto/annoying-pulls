@@ -2,12 +2,11 @@ import core.Context
 import github.GithubService
 import slack.SlackService
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object Main {
-  def run(context: Context): Future[Unit] = {
+  def run(context: Context)(implicit ec: ExecutionContext): Future[Unit] = {
     val github = new GithubService(context)
     val slack = new SlackService(context)
 
@@ -23,6 +22,7 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
+    implicit val global = ExecutionContext.global
     val context = Context()
     run(context).andThen { case _ => context.shutdown() }
   }

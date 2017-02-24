@@ -5,54 +5,50 @@ import java.util.UUID
 
 import core._
 import github.json.{Issue, Pull, Repo, User}
+import helper.DefaultFutures
 import org.scalatest.FlatSpec
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
-import slack.SlackServiceSpec.{dummyPull, settings}
+import slack.SlackServiceSpec.{dummyPull, withService}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 /**
   * sbt "set testOptions in Test := Nil" "testOnly slack.SlackServiceSpec"
   */
-class SlackServiceSpec extends FlatSpec with ScalaFutures {
-  private[this] implicit val defaultPatience =
-    PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
-
-  private[this] def post(service: SlackService, context: Context, pulls: Seq[PullRequest]): Unit = {
-    whenReady(service.webhook(pulls.toList).andThen { case _ => context.shutdown() })(_ => ())
+class SlackServiceSpec extends FlatSpec with DefaultFutures {
+  private[this] def post(pulls: Context => Seq[PullRequest]): Unit = {
+    withService { (context, service) =>
+      whenReady(service.webhook(pulls(context).toList))(_ => ())
+    }
   }
 
   it should "post empty pulls to incoming webhook" taggedAs SlackTest in {
-    val (_, context, service) = settings
-    val pulls = Nil
-    post(service, context, pulls)
+    post(_ => Nil)
   }
 
   it should "post 21 pulls to incoming webhook" taggedAs SlackTest in {
-    val (now, context, service) = settings
-    val pulls = (1 to 21).map(n => dummyPull(s"$n of 21", n, now))
-    post(service, context, pulls)
+    post(context => (1 to 21).map(n => dummyPull(s"$n of 21", n, context.now)))
   }
 
   it should "post good, warning, danger pulls to incoming webhook" taggedAs SlackTest in {
-    val (now, context, service) = settings
-    val pulls =
+    post { context =>
+      import context._
+
       dummyPull("good", 1, now.minusDays(1)) ::
-      dummyPull("warning", 2, now.minusDays(7)) ::
-      dummyPull("danger", 3, now.minusDays(14)) :: Nil
-    post(service, context, pulls)
+        dummyPull("warning", 2, now.minusDays(slack.warningAfter.toDays)) ::
+        dummyPull("danger", 3, now.minusDays(slack.dangerAfter.toDays)) :: Nil
+    }
   }
 
   it should "post pulls created before a day to incoming webhook" taggedAs SlackTest in {
-    val (now, context, service) = settings
-    val pulls =
+    post { context =>
+      import context._
+
       dummyPull("created at -23:59:59", 1, now.minusDays(1).plusSeconds(1)) ::
         dummyPull("created at -00:59:59", 2, now.minusHours(1).plusSeconds(1)) ::
         dummyPull("created at -00:00:59", 3, now.minusMinutes(1).plusSeconds(1)) ::
         dummyPull("created at -00:00:00", 4, now) ::
         dummyPull("(unexpected) created at +00:00:01", 5, now.plusSeconds(1)) :: Nil
-    post(service, context, pulls)
+    }
   }
 }
 
@@ -70,9 +66,13 @@ object SlackServiceSpec {
       issue = Issue(labels = Nil, created_at = createdAt.toString, user = user))
   }
 
-  def settings: (ZonedDateTime, Context, SlackService) = {
+  def withService(f: (Context, SlackService) => Unit)(implicit ec: ExecutionContext): Unit = {
     val context = Context()
     val service = new SlackService(context)
-    (context.now, context, service)
+    try {
+      f(context, service)
+    } finally {
+      context.shutdown()
+    }
   }
 }
