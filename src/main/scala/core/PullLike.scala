@@ -15,7 +15,8 @@ case class PullLike(fullName: String,
                     number: Long,
                     createdAt: ZonedDateTime,
                     login: String,
-                    avatarUrl: String) {
+                    avatarUrl: String,
+                    comments: Long) {
 
   private[this] def ago(unit: ChronoUnit, now: ZonedDateTime): Long = unit.between(createdAt, now)
 
@@ -39,13 +40,17 @@ case class PullLike(fullName: String,
     }
   }
 
+  private[this] def commentsOpt(context: Context): String = {
+    if (comments > 0) s"   ${context.slack.commentIconEmoji} $comments" else ""
+  }
+
   def attachment(context: Context): Attachment = {
     import context._
 
     Attachment(
       title = s"[$fullName] $title #$number",
       title_link = htmlLink,
-      footer = s"$login opened ${prettyDays(now)}",
+      footer = s"$login opened ${prettyDays(now)}${commentsOpt(context)}",
       color = color(now, slack.warningAfter, slack.dangerAfter),
       footer_icon = avatarUrl)
   }

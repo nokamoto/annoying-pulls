@@ -50,10 +50,19 @@ class SlackServiceSpec extends FlatSpec with DefaultFutures {
         dummyPull("(unexpected) created at +00:00:01", 5, now.plusSeconds(1)) :: Nil
     }
   }
+
+  it should "post pulls with the number of comments to incoming webhook" taggedAs SlackTest in {
+    post { context =>
+      import context._
+
+      dummyPull("0 comment", 1, now) ::
+        dummyPull("1 comment", 2, now, 1) :: Nil
+    }
+  }
 }
 
 object SlackServiceSpec {
-  def dummyPull(prefix: String, number: Long, createdAt: ZonedDateTime): PullRequest = {
+  def dummyPull(prefix: String, number: Long, createdAt: ZonedDateTime, comments: Long = 0): PullRequest = {
     val user = User(login = UUID.randomUUID().toString, avatar_url = "https://avatars.githubusercontent.com/u/4374383?v=3")
 
     PullRequest(
@@ -63,7 +72,7 @@ object SlackServiceSpec {
         title = s"$prefix - :title",
         issue_url = "https://localhost/:owner/:repo/issues/:number",
         number = number),
-      issue = Issue(labels = Nil, created_at = createdAt.toString, user = user))
+      issue = Issue(labels = Nil, created_at = createdAt.toString, user = user, comments = comments))
   }
 
   def withService(f: (Context, SlackService) => Unit)(implicit ec: ExecutionContext): Unit = {

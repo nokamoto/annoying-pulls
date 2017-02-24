@@ -9,6 +9,7 @@ import scala.concurrent.duration.FiniteDuration
   * @param warningAfter an attachment with warning color if the pull request is opened before this.
   * @param dangerAfter an attachment with danger color if the pull request is opened before this.
   * @param attachmentsLimit suppress the number of attachments.
+  * @param commentIconEmoji print as a comment icon in the attachment footer.
   *
   * @see [[https://api.slack.com/incoming-webhooks]]
   */
@@ -18,7 +19,8 @@ case class SlackSetting(incomingWebhook: String,
                         iconEmoji: Option[String],
                         warningAfter: FiniteDuration,
                         dangerAfter: FiniteDuration,
-                        attachmentsLimit: Int)
+                        attachmentsLimit: Int,
+                        commentIconEmoji: String)
 
 object SlackSetting {
   def apply(config: Config): SlackSetting = {
@@ -29,6 +31,7 @@ object SlackSetting {
       iconEmoji = config.getOptionString("icon-emoji"),
       warningAfter = config.getFiniteDurationOption("warning-after"),
       dangerAfter = config.getFiniteDurationOption("danger-after"),
-      attachmentsLimit = config.getInt("attachments-limit"))
+      attachmentsLimit = config.getInt("attachments-limit"),
+      commentIconEmoji = config.getString("comment-icon-emoji"))
   }
 }

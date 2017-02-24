@@ -44,7 +44,8 @@ class GithubServer(port: Int) {
       Issue(
         labels = pull.labels.map(Label.apply),
         created_at = pull.createdAt.toString,
-        user = User(login = pull.login, avatar_url = pull.avatarUrl))
+        user = User(login = pull.login, avatar_url = pull.avatarUrl),
+        comments = pull.comments)
     }
 
     res.get
