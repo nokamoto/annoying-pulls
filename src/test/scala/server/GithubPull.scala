@@ -2,10 +2,8 @@ package server
 
 import java.time.ZonedDateTime
 
-import core.PullLike
+import core.{Context, PullLike}
 import slack.json.Attachment
-
-import scala.concurrent.duration._
 
 case class GithubPull(fullName: String,
                       number: Int,
@@ -26,15 +24,9 @@ case class GithubPull(fullName: String,
       avatarUrl = avatarUrl)
   }
 
-  def attachment(now: ZonedDateTime): Attachment = {
-    like.attachment(now).make(warningAfter = GithubPull.warningAfter, dangerAfter = GithubPull.dangerAfter)
+  def attachment(context: Context): Attachment = {
+    like.attachment(context.now).make(warningAfter = context.slack.warningAfter, dangerAfter = context.slack.dangerAfter)
   }
 
   def labeled(label: String): GithubPull = copy(labels = label :: labels)
-}
-
-object GithubPull {
-  val dangerAfter: FiniteDuration = 14.days
-
-  val warningAfter: FiniteDuration = 7.days
 }

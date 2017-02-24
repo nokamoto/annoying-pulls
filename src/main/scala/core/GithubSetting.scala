@@ -1,7 +1,8 @@
-package github
+package core
 
 import com.typesafe.config.Config
 import core.ConfigOps.Implicits.Ops
+import github.Owner
 
 import scala.collection.JavaConverters._
 
