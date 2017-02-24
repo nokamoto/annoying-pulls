@@ -1,12 +1,12 @@
 package core
 
-import github.GithubSetting
-import slack.SlackSetting
 import slack.json.IncomingWebhook
 
-class IncomingWebhookService(core: CoreContext, gh: GithubSetting, sl: SlackSetting) {
+class IncomingWebhookService(context: Context) {
+  import context._
+
   private[this] def exclude(pulls: List[PullRequest]) = {
-    pulls.filterNot(_.issue.labels.exists(label => gh.excludedLabels.contains(label.name)))
+    pulls.filterNot(_.issue.labels.exists(label => github.excludedLabels.contains(label.name)))
   }
 
   private[this] def print(cond: Boolean, s: String): String = if (cond) s else ""
@@ -17,7 +17,7 @@ class IncomingWebhookService(core: CoreContext, gh: GithubSetting, sl: SlackSett
 
     val text = s"$size pull request${PrettyOps.s(size)} opened"
 
-    val hidden = print(excludedSize > sl.attachmentsLimit, s"${excludedSize - sl.attachmentsLimit} hidden")
+    val hidden = print(excludedSize > slack.attachmentsLimit, s"${excludedSize - slack.attachmentsLimit} hidden")
     val excluded = print(size > excludedSize, s"${size - excludedSize} excluded")
     val extended = hidden + print(hidden.nonEmpty && excluded.nonEmpty, ", ") + print(excluded.nonEmpty, excluded)
 
@@ -29,13 +29,13 @@ class IncomingWebhookService(core: CoreContext, gh: GithubSetting, sl: SlackSett
     */
   def incomingWebhook(pulls: List[PullRequest]): IncomingWebhook = {
     IncomingWebhook(
-      username = sl.username,
-      icon_emoji = sl.iconEmoji,
-      channel = sl.channel,
+      username = slack.username,
+      icon_emoji = slack.iconEmoji,
+      channel = slack.channel,
       text = text(pulls),
       attachments = exclude(pulls).
         sortBy(_.createdAt.toEpochSecond).
-        take(sl.attachmentsLimit).
-        map(_.like.attachment(core.now).make(warningAfter = sl.warningAfter, dangerAfter = sl.dangerAfter)))
+        take(slack.attachmentsLimit).
+        map(_.like.attachment(now).make(warningAfter = slack.warningAfter, dangerAfter = slack.dangerAfter)))
   }
 }

@@ -1,9 +1,13 @@
 package server
 
-import github.GithubSetting
+import java.time.ZonedDateTime
+
+import akka.actor.ActorSystem
+import core.{Context, GithubSetting, SlackSetting}
 import play.api.Mode
 import play.core.server.{NettyServer, ServerConfig}
-import slack.SlackSetting
+
+import scala.concurrent.duration._
 
 class MockServers(port: Int) {
   val github = new GithubServer(port)
@@ -18,38 +22,42 @@ class MockServers(port: Int) {
 }
 
 object MockServers {
-  private[this] def withServers(org: Option[GithubOrg],
+  private[this] def withServers(now: ZonedDateTime,
+                                org: Option[GithubOrg],
                                 user: Option[GithubUser],
-                                f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = {
+                                f: (MockServers, Context) => Unit): Unit = {
     val servers = new MockServers(9000)
+
+    val github = GithubSetting(
+      api = servers.github.api,
+      org = org.map(_.toOwner),
+      username = user.map(_.toOwner),
+      excludedLabels = "wontfix" :: "wip" :: Nil)
+
+    val slack = SlackSetting(
+      incomingWebhook = servers.slack.incomingWebhook,
+      channel = None,
+      username = None,
+      iconEmoji = None,
+      warningAfter = 7.days,
+      dangerAfter = 14.days,
+      attachmentsLimit = 20)
+
+    val context = new Context(system = ActorSystem(), now = now, github = github, slack = slack)
+
     try {
-      val gh = GithubSetting(
-        api = servers.github.api,
-        org = org.map(_.toOwner),
-        username = user.map(_.toOwner),
-        excludedLabels = "wontfix" :: "wip" :: Nil)
-
-      val sl = SlackSetting(
-        incomingWebhook = servers.slack.incomingWebhook,
-        channel = None,
-        username = None,
-        iconEmoji = None,
-        warningAfter = GithubPull.warningAfter,
-        dangerAfter = GithubPull.dangerAfter,
-        attachmentsLimit = 20)
-
       org.foreach(servers.github.org.set)
       user.foreach(servers.github.user.set)
-
-      f(servers, gh, sl)
+      f(servers, context)
     } finally {
+      context.shutdown()
       servers.shutdown()
     }
   }
 
-  def withServers(f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = withServers(None, None, f)
+  def withServers(now: ZonedDateTime)(f: (MockServers, Context) => Unit): Unit = withServers(now, None, None, f)
 
-  def withServers(org: GithubOrg, user: GithubUser)(f: (MockServers, GithubSetting, SlackSetting) => Unit): Unit = {
-    withServers(Some(org), Some(user), f)
+  def withServers(now: ZonedDateTime, org: GithubOrg, user: GithubUser)(f: (MockServers, Context) => Unit): Unit = {
+    withServers(now, Some(org), Some(user), f)
   }
 }

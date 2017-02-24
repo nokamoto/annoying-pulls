@@ -2,15 +2,15 @@ package github
 
 import java.time.{Instant, ZoneId, ZonedDateTime}
 
-import core.{CoreContext, PullRequest}
+import core.{Context, PullRequest}
 import github.json.{Issue, Pull, Repo}
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class GithubService(gh: GithubSetting, core: CoreContext)(implicit ec: ExecutionContext) {
-  import core._
+class GithubService(context: Context)(implicit ec: ExecutionContext) {
+  import context._
 
   private[this] def header(h: String, res: WSResponse): String = s"""$h: ${res.header(h).getOrElse("")}"""
 
@@ -47,14 +47,14 @@ class GithubService(gh: GithubSetting, core: CoreContext)(implicit ec: Execution
     }
   }
 
-  private[this] def getOrgRepos: Future[List[(Repo, Owner)]] = getRepos(gh.org, org => s"${gh.api}/orgs/${org.name}/repos")
+  private[this] def getOrgRepos: Future[List[(Repo, Owner)]] = getRepos(github.org, org => s"${github.api}/orgs/${org.name}/repos")
 
   private[this] def getUserRepos: Future[List[(Repo, Owner)]] = {
-    getRepos(gh.username, username => s"${gh.api}/users/${username.name}/repos")
+    getRepos(github.username, username => s"${github.api}/users/${username.name}/repos")
   }
 
   private[this] def getPulls(repo: Repo, owner: Owner): Future[List[(Repo, Pull)]] = {
-    get[List[Pull]](s"${gh.api}/repos/${owner.name}/${repo.name}/pulls").
+    get[List[Pull]](s"${github.api}/repos/${owner.name}/${repo.name}/pulls").
       map(_.map(pull => (repo, pull)))
   }
 

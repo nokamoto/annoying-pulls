@@ -2,40 +2,36 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import MainSpec._
-import akka.actor.ActorSystem
-import core.CoreContext
-import github.GithubSetting
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import core.Context
+import org.scalatest.FlatSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import server._
+import slack.AttachmentColor
 import slack.AttachmentColor.{Danger, Good, Warning}
-import slack.{AttachmentColor, SlackSetting}
 import slack.json.{Attachment, IncomingWebhook}
 
 import scala.concurrent.duration._
 
-class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
+class MainSpec extends FlatSpec with ScalaFutures {
   private[this] implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
-  private[this] val core = new CoreContext(system = ActorSystem())
-
-  private[this] val now = core.now
+  private[this] val now = ZonedDateTime.now()
 
   private[this] def received(f: IncomingWebhook => Unit): Unit = {
-    MockServers.withServers { (servers, gh, sl) =>
-      whenReady(Main.run(core, gh, sl)) { _ =>
+    MockServers.withServers(now) { (servers, context) =>
+      whenReady(Main.run(context)) { _ =>
         f(servers.slack.received.get())
       }
     }
   }
 
   private[this] def received(org: GithubOrg, user: GithubUser)
-                            (f: (IncomingWebhook, GithubSetting, SlackSetting) => Unit): Unit = {
-    MockServers.withServers(org, user) { (servers, gh, sl) =>
-      whenReady(Main.run(core, gh, sl)) { _ =>
-        f(servers.slack.received.get(), gh, sl)
+                            (f: (IncomingWebhook, Context) => Unit): Unit = {
+    MockServers.withServers(now, org, user) { (servers, context) =>
+      whenReady(Main.run(context)) { _ =>
+        f(servers.slack.received.get(), context)
       }
     }
   }
@@ -55,9 +51,9 @@ class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
     val user = githubUser(
       repo3 => repo3.pull(3, now.minusDays(3)).pull(4, now.minusDays(2)))
 
-    val expected = pulls(now, org, user)
+    received(org, user) { (message, context) =>
+      val expected = pulls(context, org, user)
 
-    received(org, user) { (message, _, _) =>
       assert(message.text === "4 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
@@ -79,20 +75,20 @@ class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
     val user = githubUser(
       repo2 => repo2.pull(3, warningAfter).pull(4, dangerAfter))
 
-    val expected = pulls(now, org, user)
+    received(org, user) { (message, context) =>
+      val expected = pulls(context, org, user)
 
-    def colorNumbers(color: AttachmentColor) = expected.filter(_.attachment.color == color).map(_.pull.number)
+      def colorNumbers(color: AttachmentColor) = expected.filter(_.attachment.color == color).map(_.pull.number)
 
-    received(org, user) { (message, _, slack) =>
       assert(message.text === "4 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
       assert(colorNumbers(Good) === 1L :: Nil)
 
-      assert(slack.warningAfter === 7.days)
+      assert(context.slack.warningAfter === 7.days)
       assert(colorNumbers(Warning) === 2L :: 3L :: Nil)
 
-      assert(slack.dangerAfter ===  14.days)
+      assert(context.slack.dangerAfter ===  14.days)
       assert(colorNumbers(Danger) === 4L :: Nil)
     }
   }
@@ -107,13 +103,13 @@ class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
 
     val user = githubUser(empty => empty)
 
-    val expected = pulls(now, org, user)
+    received(org, user) { (message, context) =>
+      val expected = pulls(context, org, user)
 
-    received(org, user) { (message, github, _) =>
       assert(message.text === "3 pull requests opened (2 excluded)")
 
-      assert(github.excludedLabels.contains(wontfix))
-      assert(github.excludedLabels.contains(wip))
+      assert(context.github.excludedLabels.contains(wontfix))
+      assert(context.github.excludedLabels.contains(wip))
       assert(message.attachments === expected.filter(_.pull.labels.contains(bug)).map(_.attachment))
     }
   }
@@ -127,12 +123,12 @@ class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
 
     val user = githubUser(empty => empty)
 
-    val expected = pulls(now, org, user)
+    received(org, user) { (message, context) =>
+      val expected = pulls(context, org, user)
 
-    received(org, user) { (message, _, slack) =>
-      assert(slack.attachmentsLimit === 20)
+      assert(context.slack.attachmentsLimit === 20)
       assert(message.text === "30 pull requests opened (10 hidden)")
-      assert(message.attachments === expected.map(_.attachment).take(slack.attachmentsLimit))
+      assert(message.attachments === expected.map(_.attachment).take(context.slack.attachmentsLimit))
     }
   }
 
@@ -151,18 +147,13 @@ class MainSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
 
     val user = githubUser(empty => empty)
 
-    val expected = pulls(now, org, user)
+    received(org, user) { (message, context) =>
+      val expected = pulls(context, org, user)
 
-    received(org, user) { (message, _, slack) =>
       assert(message.text === "30 pull requests opened (5 hidden, 5 excluded)")
       assert(message.attachments === expected.
-        filterNot(_.pull.labels.contains(wontfix)).take(slack.attachmentsLimit).map(_.attachment))
+        filterNot(_.pull.labels.contains(wontfix)).take(context.slack.attachmentsLimit).map(_.attachment))
     }
-  }
-
-  override protected def afterAll(): Unit = {
-    core.shutdown()
-    super.afterAll()
   }
 }
 
@@ -191,11 +182,11 @@ object MainSpec {
     }
   }
 
-  private def pulls(now: ZonedDateTime, org: GithubOrg, user: GithubUser): List[PullAttachment] = {
+  private def pulls(context: Context, org: GithubOrg, user: GithubUser): List[PullAttachment] = {
     val res = for {
       repo <- org.repos ++ user.repos
       pull <- repo.pulls
-    } yield PullAttachment(pull, pull.attachment(now))
+    } yield PullAttachment(pull, pull.attachment(context))
 
     res.sortBy(_.pull.createdAt.toEpochSecond)
   }

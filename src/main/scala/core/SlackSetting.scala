@@ -1,4 +1,4 @@
-package slack
+package core
 
 import com.typesafe.config.Config
 import core.ConfigOps.Implicits.Ops
