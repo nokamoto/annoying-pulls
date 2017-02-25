@@ -1,5 +1,13 @@
 scalaVersion := "2.11.8"
 
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-unchecked",
+  "-target:jvm-1.8"
+)
+
 licenses := Seq("MIT License" -> url("http://www.opensource.org/licenses/mit-license"))
 
 assemblyOutputPath in assembly := file("target/annoying-pulls-0.2-SNAPSHOT.jar")
