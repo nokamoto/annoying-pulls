@@ -24,9 +24,9 @@ class Context(val now: ZonedDateTime, val github: GithubSetting, val slack: Slac
 object Context {
   private[this] val config = ConfigFactory.load()
 
-  protected[core] def github = GithubSetting(config.getConfig("github"))
+  def github = GithubSetting(config.getConfig("github"))
 
-  protected[core] def slack = SlackSetting(config.getConfig("slack"))
+  def slack = SlackSetting(config.getConfig("slack"))
 
   trait StaticContext {
     val now: ZonedDateTime

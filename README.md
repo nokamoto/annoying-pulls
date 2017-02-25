@@ -1,5 +1,7 @@
 # annoying-pulls
 
+![slack thumbnail v0.2](https://cloud.githubusercontent.com/assets/4374383/23327713/53d602d2-fb54-11e6-9e5e-8ef4cce63576.png)
+
 [![Build Status](https://travis-ci.org/nokamoto/annoying-pulls.svg?branch=master)](https://travis-ci.org/nokamoto/annoying-pulls)
 
 Slack [#annoying-pulls](https://nokamoto.slack.com/messages/annoying-pulls)
