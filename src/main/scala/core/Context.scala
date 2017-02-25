@@ -5,12 +5,13 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
+import core.Context.StaticContext
 import play.api.libs.ws.ahc.AhcWSClient
 
-class Context(system: ActorSystem, val now: ZonedDateTime, val github: GithubSetting, val slack: SlackSetting) {
-  private[this] implicit val as = system
+class Context(val now: ZonedDateTime, val github: GithubSetting, val slack: SlackSetting) extends StaticContext {
+  private[this] implicit val system = ActorSystem()
 
-  private[this] implicit val m = ActorMaterializer()
+  private[this] implicit val materializer = ActorMaterializer()
 
   val ws: AhcWSClient = AhcWSClient()
 
@@ -21,12 +22,19 @@ class Context(system: ActorSystem, val now: ZonedDateTime, val github: GithubSet
 }
 
 object Context {
-  def apply(): Context = {
-    val config = ConfigFactory.load()
-    new Context(
-      system = ActorSystem(),
-      now = ZonedDateTime.now(),
-      github = GithubSetting(config.getConfig("github")),
-      slack = SlackSetting(config.getConfig("slack")))
+  private[this] val config = ConfigFactory.load()
+
+  protected[core] def github = GithubSetting(config.getConfig("github"))
+
+  protected[core] def slack = SlackSetting(config.getConfig("slack"))
+
+  trait StaticContext {
+    val now: ZonedDateTime
+
+    val github: GithubSetting
+
+    val slack: SlackSetting
   }
+
+  def apply(): Context = new Context(now = ZonedDateTime.now(), github = github, slack = slack)
 }
