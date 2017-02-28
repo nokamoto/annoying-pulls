@@ -13,7 +13,8 @@ case class GithubPull(fullName: String,
                       labels: List[String],
                       login: String,
                       avatarUrl: String,
-                      comments: Long) {
+                      comments: Long,
+                      reviewComments: Long) {
 
   private[this] val like = {
     PullLike(
@@ -24,7 +25,7 @@ case class GithubPull(fullName: String,
       createdAt = createdAt,
       login = login,
       avatarUrl = avatarUrl,
-      comments = comments)
+      comments = comments + reviewComments)
   }
 
   def attachment(context: Context): Attachment = like.attachment(context)

@@ -3,7 +3,7 @@ package github
 import java.time.{Instant, ZoneId, ZonedDateTime}
 
 import core.{Context, PullRequest}
-import github.json.{Issue, Pull, Repo}
+import github.json.{Issue, Pull, Pulls, Repo}
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 
@@ -40,40 +40,39 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) {
     }
   }
 
-  private[this] def getRepos(ownerOpt: Option[Owner], path: Owner => String): Future[List[(Repo, Owner)]] = {
+  private[this] def getRepos(ownerOpt: Option[Owner], path: Owner => String): Future[List[(Owner, Repo)]] = {
     ownerOpt match {
-      case Some(owner) => get[List[Repo]](path(owner)).map(_.map(repo => (repo, owner)))
+      case Some(owner) => get[List[Repo]](path(owner)).map(_.map((owner, _)))
       case None => Future.successful(Nil)
     }
   }
 
-  private[this] def getOrgRepos: Future[List[(Repo, Owner)]] = getRepos(github.org, org => s"${github.api}/orgs/${org.name}/repos")
+  private[this] def getOrgRepos = getRepos(github.org, org => s"${github.api}/orgs/${org.name}/repos")
 
-  private[this] def getUserRepos: Future[List[(Repo, Owner)]] = {
-    getRepos(github.username, username => s"${github.api}/users/${username.name}/repos")
+  private[this] def getUserRepos = getRepos(github.username, username => s"${github.api}/users/${username.name}/repos")
+
+  private[this] def getPullRequest(repo: Repo, pulls: Pulls): Future[PullRequest] = {
+    for {
+      issue <- get[Issue](pulls.issue_url)
+      pull <- get[Pull](pulls.url)
+    } yield PullRequest(repo = repo, pulls = pulls, pull = pull, issue = issue)
   }
 
-  private[this] def getPulls(repo: Repo, owner: Owner): Future[List[(Repo, Pull)]] = {
-    get[List[Pull]](s"${github.api}/repos/${owner.name}/${repo.name}/pulls").
-      map(_.map(pull => (repo, pull)))
-  }
-
-  private[this] def getIssue(repo: Repo, pull: Pull): Future[(Repo, Pull, Issue)] = {
-    get[Issue](pull.issue_url).map(issue => (repo, pull, issue))
+  private[this] def getPullRequests(owner: Owner, repo: Repo): Future[List[PullRequest]] = {
+    for {
+      pulls <- get[List[Pulls]](s"${github.api}/repos/${owner.name}/${repo.name}/pulls")
+      res <- Future.sequence(pulls.map(getPullRequest(repo, _)))
+    } yield res
   }
 
   /**
-    * List all pull requests filtered by the excluded labels for the organization and user repositories.
+    * List all pull requests for the organization and user repositories.
     */
   def pulls(): Future[List[PullRequest]] = {
     for {
       org <- getOrgRepos
       user <- getUserRepos
-      pulls <- Future.sequence((org ++ user).map { case (repo, owner) => getPulls(repo, owner) })
-      issues <- Future.sequence(pulls.flatten.map { case (repo, pull) => getIssue(repo, pull) })
-    } yield {
-      issues.
-        map { case (repo, pull, issue) => PullRequest(repo = repo, pull = pull, issue = issue) }
-    }
+      res <- Future.sequence((org ++ user).map((getPullRequests _).tupled))
+    } yield res.flatten
   }
 }
