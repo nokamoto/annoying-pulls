@@ -29,8 +29,8 @@ object SlackSetting {
       channel = config.getOptionString("channel"),
       username = config.getOptionString("username"),
       iconEmoji = config.getOptionString("icon-emoji"),
-      warningAfter = config.getFiniteDurationOption("warning-after"),
-      dangerAfter = config.getFiniteDurationOption("danger-after"),
+      warningAfter = config.getFiniteDuration("warning-after"),
+      dangerAfter = config.getFiniteDuration("danger-after"),
       attachmentsLimit = config.getInt("attachments-limit"),
       commentIconEmoji = config.getString("comment-icon-emoji"))
   }
