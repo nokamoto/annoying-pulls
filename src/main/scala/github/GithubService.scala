@@ -4,12 +4,14 @@ import java.time.{Instant, ZoneId, ZonedDateTime}
 
 import core.{Context, PullRequest}
 import github.json.{Issue, Pull, Pulls, Repo}
+import core.{Context, Logger, PullRequest}
+import github.json.{Issue, Pull, Repo}
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class GithubService(context: Context)(implicit ec: ExecutionContext) {
+class GithubService(context: Context)(implicit ec: ExecutionContext) extends Logger {
   import context._
 
   private[this] def header(h: String, res: WSResponse): String = s"""$h: ${res.header(h).getOrElse("")}"""
@@ -21,17 +23,17 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) {
   private[this] val RESET = "X-RateLimit-Reset"
 
   private[this] def get[A : Reads](url: String): Future[A] = {
-    println(s"GET $url")
+    logger.info(s"GET $url")
 
     ws.url(url).get().map { (res: WSResponse) =>
       val time = ZonedDateTime.ofInstant(
         Instant.ofEpochSecond(res.header(RESET).map(_.toLong).getOrElse(0)),
         ZoneId.systemDefault())
 
-      println(header(LIMIT, res))
-      println(header(REMAINING, res))
-      println(header(RESET, res) + s"($time)")
-      println(s"${res.status} - ${res.json}")
+      logger.info(header(LIMIT, res))
+      logger.info(header(REMAINING, res))
+      logger.info(header(RESET, res) + s"($time)")
+      logger.info(s"${res.status} - ${res.json}")
 
       res.json.validate[A]
     }.flatMap {

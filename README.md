@@ -12,6 +12,12 @@ java -Dconfig.file=application.conf -jar target/annoying-pulls-0.2.2-SNAPSHOT.ja
 ```
 
 ## Settings
+| dependency | mandatory |
+| --- | --- |
+| [typesafe config](https://github.com/typesafehub/config) | Yes |
+| [logback](https://logback.qos.ch/) | No ( [default](https://github.com/nokamoto/annoying-pulls/tree/master/src/main/resources/logback.xml) ) |
+
+### Typesafe Config File
 ```
 github {
   api = "https://api.github.com"
@@ -43,7 +49,7 @@ slack {
 ```
 
 
-### Github
+#### Github
 | key | mandatory | |
 | --- | --- | --- |
 | api | Yes | https://developer.github.com/v3/#schema |
@@ -51,7 +57,7 @@ slack {
 | username | No | https://developer.github.com/v3/repos/#list-user-repositories |
 | exclude-labels | Yes | filter pull requests by label |
 
-### Slack
+#### Slack
 | key | mandatory | |
 | --- | --- | --- |
 | incoming-webhook | Yes | https://api.slack.com/incoming-webhooks |

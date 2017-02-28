@@ -29,4 +29,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-ws" % playVersion,
   "com.typesafe" % "config" % "1.3.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "com.typesafe.play" %% "play-netty-server" % playVersion % "test")
+  "com.typesafe.play" %% "play-netty-server" % playVersion % "test",
+  "org.slf4j" % "slf4j-api" % "1.7.21",
+  "ch.qos.logback" % "logback-classic" % "1.2.1")
