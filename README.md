@@ -8,7 +8,7 @@ Slack [#annoying-pulls](https://nokamoto.slack.com/messages/annoying-pulls)
 
 ```
 sbt assembly
-java -Dconfig.file=application.conf -jar target/annoying-pulls-0.2.jar
+java -Dconfig.file=application.conf -jar target/annoying-pulls-0.2.1-SNAPSHOT.jar
 ```
 
 ## Settings

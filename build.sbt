@@ -10,7 +10,7 @@ scalacOptions ++= Seq(
 
 licenses := Seq("MIT License" -> url("http://www.opensource.org/licenses/mit-license"))
 
-assemblyOutputPath in assembly := file("target/annoying-pulls-0.2.jar")
+assemblyOutputPath in assembly := file("target/annoying-pulls-0.2.1-SNAPSHOT.jar")
 
 assemblyMergeStrategy in assembly := {
   case PathList(ps @ _*) if ps.last == "io.netty.versions.properties" => MergeStrategy.discard
