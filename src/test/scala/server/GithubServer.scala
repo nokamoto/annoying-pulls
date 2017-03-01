@@ -30,9 +30,16 @@ class GithubServer(port: Int) {
 
   private[this] def issueUrl(owner: String, repo: String, n: Int): String = s"http://localhost:$port/repos/$owner/$repo/issues/$n"
 
-  private[this] def pulls(owner: String, repo: String): List[Pull] = {
+  private[this] def pullUrl(owner: String, repo: String, n: Int): String = s"http://localhost:$port/repos/$owner/$repo/pulls/$n"
+
+  private[this] def pulls(owner: String, repo: String): List[Pulls] = {
     getOwner(owner).repos.find(_.name == repo).get.pulls.map { pull =>
-      Pull(html_url = pull.url, title = pull.title, issue_url = issueUrl(owner, repo, pull.number), number = pull.number)
+      Pulls(
+        url = pullUrl(owner, repo, pull.number),
+        html_url = pull.url,
+        title = pull.title,
+        issue_url = issueUrl(owner, repo, pull.number),
+        number = pull.number)
     }
   }
 
@@ -44,8 +51,18 @@ class GithubServer(port: Int) {
       Issue(
         labels = pull.labels.map(Label.apply),
         created_at = pull.createdAt.toString,
-        user = User(login = pull.login, avatar_url = pull.avatarUrl),
-        comments = pull.comments)
+        user = User(login = pull.login, avatar_url = pull.avatarUrl))
+    }
+
+    res.get
+  }
+
+  private[this] def pull(owner: String, repo: String, number: Int): Pull = {
+    val res = for {
+      repo <- getOwner(owner).repos.find(_.name == repo)
+      pull <- repo.pulls.find(_.number == number)
+    } yield {
+      Pull(comments = pull.comments, review_comments = pull.reviewComments)
     }
 
     res.get
@@ -59,6 +76,8 @@ class GithubServer(port: Int) {
     case GET(p"/repos/$owner/$repo/pulls") => ok(pulls(owner, repo))
 
     case GET(p"/repos/$owner/$repo/issues/$number") => ok(issue(owner, repo, number.toInt))
+
+    case GET(p"/repos/$owner/$repo/pulls/$number") => ok(pull(owner, repo, number.toInt))
   }
 
   val api = s"http://localhost:$port"

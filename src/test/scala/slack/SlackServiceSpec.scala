@@ -36,7 +36,9 @@ class SlackServiceSpec extends FlatSpec with DefaultFutures with DummyPullReques
       import context._
 
       pullRequest(createdAt = now, title = "0 comment", number = 2) ::
-        pullRequest(createdAt = now, title = "1 comment", number = 3, comments = 1) :: Nil
+        pullRequest(createdAt = now, title = "1 comment", number = 3, comments = 1) ::
+        pullRequest(createdAt = now, title = "1 review comment", number = 4, reviewComments = 1)  ::
+        pullRequest(createdAt = now, title = "1 comment and 1 review comment", number = 5, comments = 1, reviewComments = 1) :: Nil
     }
   }
 }

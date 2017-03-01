@@ -20,7 +20,8 @@ case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]
       labels = Nil,
       login = login,
       avatarUrl = s"http://localhost/$login/avatar",
-      comments = Random.nextInt(10))
+      comments = Random.nextInt(10),
+      reviewComments = Random.nextInt(10))
 
     copy(pulls = f(p) :: pulls)
   }
