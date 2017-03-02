@@ -3,10 +3,10 @@ package core
 import java.time.ZonedDateTime
 
 import core.Context.StaticContext
-import org.scalatest.FlatSpec
-import slack.json.{Attachment, IncomingWebhook}
 import core.IncomingWebhookServiceSpec._
 import helper.DummyPullRequest
+import org.scalatest.FlatSpec
+import slack.json.IncomingWebhook
 
 class IncomingWebhookServiceSpec extends FlatSpec with DummyPullRequest {
   import context._
@@ -57,16 +57,6 @@ object IncomingWebhookServiceSpec {
     override val slack: SlackSetting = Context.slack
 
     override val github: GithubSetting = Context.github
-  }
-
-  private def incomingWebhook(text: String, attachments: List[Attachment]): IncomingWebhook = {
-    import context.slack
-    IncomingWebhook(
-      username = slack.username,
-      icon_emoji = slack.iconEmoji,
-      channel = slack.channel,
-      text = text,
-      attachments = attachments)
   }
 
   private def withService(pulls: List[PullRequest])(f: IncomingWebhook => Unit): Unit = {
