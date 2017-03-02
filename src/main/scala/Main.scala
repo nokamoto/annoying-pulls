@@ -1,11 +1,11 @@
-import core.Context
+import core.{Context, Logger}
 import github.GithubService
 import slack.SlackService
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-object Main {
+object Main extends Logger {
   def run(context: Context)(implicit ec: ExecutionContext): Future[Unit] = {
     val github = new GithubService(context)
     val slack = new SlackService(context)
@@ -16,8 +16,8 @@ object Main {
     } yield ()
 
     future.andThen {
-      case Success(_) => println("done.")
-      case Failure(e) => e.printStackTrace()
+      case Success(_) => logger.info("done.")
+      case Failure(e) => logger.info("failed.", e)
     }
   }
 
