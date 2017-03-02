@@ -12,7 +12,7 @@ object ConfigOps {
     implicit class Ops(config: Config) {
       def getOptionString(path: String): Option[String] = Try(config.getString(path)).toOption
 
-      def getFiniteDurationOption(path: String): FiniteDuration = config.getDuration(path, TimeUnit.DAYS).days
+      def getFiniteDuration(path: String): FiniteDuration = config.getDuration(path, TimeUnit.SECONDS).seconds
     }
   }
 }

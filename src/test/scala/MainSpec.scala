@@ -65,14 +65,14 @@ class MainSpec extends FlatSpec with DefaultFutures {
       repo1 => repo1.pull(1, warningAfter.plusDays(1)).pull(2, dangerAfter.plusDays(1)))
 
     val user = githubUser(
-      repo2 => repo2.pull(3, warningAfter).pull(4, dangerAfter))
+      repo2 => repo2.pull(3, warningAfter).pull(4, dangerAfter).pull(5, now.minusDays(1000)))
 
     received(org, user) { (message, context) =>
       val expected = pulls(context, org, user)
 
       def colorNumbers(color: AttachmentColor) = expected.filter(_.attachment.color == color).map(_.pull.number)
 
-      assert(message.text === "4 pull requests opened")
+      assert(message.text === "5 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
       assert(colorNumbers(Good) === 1L :: Nil)
@@ -81,7 +81,7 @@ class MainSpec extends FlatSpec with DefaultFutures {
       assert(colorNumbers(Warning) === 2L :: 3L :: Nil)
 
       assert(context.slack.dangerAfter ===  14.days)
-      assert(colorNumbers(Danger) === 4L :: Nil)
+      assert(colorNumbers(Danger) === 5L :: 4L :: Nil)
     }
   }
 

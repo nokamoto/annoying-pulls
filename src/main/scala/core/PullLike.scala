@@ -34,7 +34,7 @@ case class PullLike(fullName: String,
   }
 
   private[this] def color(now: ZonedDateTime, warningAfter: FiniteDuration, dangerAfter: FiniteDuration): AttachmentColor = {
-    ago(ChronoUnit.DAYS, now).days match {
+    ago(ChronoUnit.SECONDS, now).seconds match {
       case ago if ago >= dangerAfter => Danger
       case ago if ago >= warningAfter => Warning
       case _ => Good
