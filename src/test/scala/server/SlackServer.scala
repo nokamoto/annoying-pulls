@@ -15,7 +15,7 @@ class SlackServer(port: Int) {
   val handler: PartialFunction[RequestHeader, Handler] = {
     case POST(p"/services/$id") => Action(BodyParsers.parse.json[IncomingWebhook]) { req =>
       received.set(req.body)
-      Results.Ok("")
+      Results.Ok(id)
     }
   }
 }
