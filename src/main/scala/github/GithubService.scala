@@ -1,11 +1,9 @@
 package github
 
-import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.concurrent.atomic.AtomicInteger
 
-import core.{Context, PullRequest}
-import github.json.{Issue, Pull, Pulls, Repo}
 import core.{Context, Logger, PullRequest}
-import github.json.{Issue, Pull, Repo}
+import github.json.{Issue, Pull, Pulls, Repo}
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 
@@ -14,26 +12,18 @@ import scala.concurrent.{ExecutionContext, Future}
 class GithubService(context: Context)(implicit ec: ExecutionContext) extends Logger {
   import context._
 
-  private[this] def header(h: String, res: WSResponse): String = s"""$h: ${res.header(h).getOrElse("")}"""
-
-  private[this] val LIMIT = "X-RateLimit-Limit"
-
-  private[this] val REMAINING = "X-RateLimit-Remaining"
-
-  private[this] val RESET = "X-RateLimit-Reset"
+  private[this] val counter = new AtomicInteger(0)
 
   private[this] def get[A : Reads](url: String): Future[A] = {
-    logger.info(s"GET $url")
+    val n = counter.incrementAndGet()
+
+    logger.info(s"[$n] GET $url")
 
     ws.url(url).get().map { (res: WSResponse) =>
-      val time = ZonedDateTime.ofInstant(
-        Instant.ofEpochSecond(res.header(RESET).map(_.toLong).getOrElse(0)),
-        ZoneId.systemDefault())
+      val rateLimit = RateLimit(res)
 
-      logger.info(header(LIMIT, res))
-      logger.info(header(REMAINING, res))
-      logger.info(header(RESET, res) + s"($time)")
-      logger.info(s"${res.status} - ${res.json}")
+      logger.info(s"[$n] ${res.status} - ${rateLimit.pretty}")
+      logger.info(s"[$n] ${res.json}")
 
       res.json.validate[A]
     }.flatMap {
@@ -60,21 +50,28 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) extends Log
     } yield PullRequest(repo = repo, pulls = pulls, pull = pull, issue = issue)
   }
 
+  private[this] def sequentially[A, B](as: List[A], f: A => Future[B]): Future[List[B]] = {
+    as.foldLeft(Future.successful(List.empty[B])) { case (fbs, a) =>
+      for {
+        bs <- fbs
+        b <- f(a)
+      } yield b :: bs
+    }.map(_.reverse)
+  }
+
   private[this] def getPullRequests(owner: Owner, repo: Repo): Future[List[PullRequest]] = {
     for {
       pulls <- get[List[Pulls]](s"${github.api}/repos/${owner.name}/${repo.name}/pulls")
-      res <- Future.sequence(pulls.map(getPullRequest(repo, _)))
+      res <- sequentially(pulls, (getPullRequest _).curried(repo))
     } yield res
   }
 
   /**
     * List all pull requests for the organization and user repositories.
     */
-  def pulls(): Future[List[PullRequest]] = {
-    for {
-      org <- getOrgRepos
-      user <- getUserRepos
-      res <- Future.sequence((org ++ user).map((getPullRequests _).tupled))
-    } yield res.flatten
-  }
+  def pulls(): Future[List[PullRequest]] = for {
+    org <- getOrgRepos
+    user <- getUserRepos
+    res <- sequentially(org ++ user, (getPullRequests _).tupled)
+  } yield res.flatten
 }
