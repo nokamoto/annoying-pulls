@@ -56,6 +56,7 @@ slack {
 | org | No | https://developer.github.com/v3/repos/#list-organization-repositories |
 | username | No | https://developer.github.com/v3/repos/#list-user-repositories |
 | exclude-labels | Yes | filter pull requests by label |
+| personal-access-token | No | `Authorization` token to increase [rate limit](https://developer.github.com/v3/#rate-limiting) |
 
 #### Slack
 | key | mandatory | |

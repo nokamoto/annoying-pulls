@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import core.{Context, Logger, PullRequest}
 import github.json.{Issue, Pull, Pulls, Repo}
 import play.api.libs.json._
-import play.api.libs.ws.WSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -14,12 +13,16 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) extends Log
 
   private[this] val counter = new AtomicInteger(0)
 
+  private[this] val AUTHORIZATION = "Authorization"
+
   private[this] def get[A : Reads](url: String): Future[A] = {
     val n = counter.incrementAndGet()
 
     logger.info(s"[$n] GET $url")
 
-    ws.url(url).get().map { (res: WSResponse) =>
+    github.personalAccessToken.foldLeft(ws.url(url)) { case (req, token) =>
+      req.withHeaders(AUTHORIZATION -> s"token $token")
+    }.get().map { res =>
       val rateLimit = RateLimit(res)
 
       logger.info(s"[$n] ${res.status} - ${rateLimit.pretty}")
