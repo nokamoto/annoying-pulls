@@ -31,7 +31,8 @@ object MockServers {
       api = servers.github.api,
       org = org.map(_.toOwner),
       username = user.map(_.toOwner),
-      excludedLabels = "wontfix" :: "wip" :: Nil)
+      excludedLabels = "wontfix" :: "wip" :: Nil,
+      personalAccessToken = None)
 
     val slack = SlackSetting(
       incomingWebhook = servers.slack.incomingWebhook,
