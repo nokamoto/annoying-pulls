@@ -8,6 +8,10 @@ scalacOptions ++= Seq(
   "-target:jvm-1.8"
 )
 
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-l", "slack.SlackTest", "-oDF")
+
+fork in Test := true
+
 licenses := Seq("MIT License" -> url("http://www.opensource.org/licenses/mit-license"))
 
 assemblyOutputPath in assembly := file("target/annoying-pulls-0.2.2-SNAPSHOT.jar")
@@ -20,8 +24,6 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
-
-testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-l", "slack.SlackTest")
 
 val playVersion = "2.5.12"
 
