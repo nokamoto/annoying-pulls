@@ -1,3 +1,5 @@
+package nokamoto
+
 import core.{Context, Logger}
 import github.GithubService
 import slack.SlackService

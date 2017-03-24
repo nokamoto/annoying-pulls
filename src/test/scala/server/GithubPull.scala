@@ -2,7 +2,8 @@ package server
 
 import java.time.ZonedDateTime
 
-import core.{Context, PullLike}
+import core.Context.StaticContext
+import core.PullLike
 import slack.json.Attachment
 
 case class GithubPull(fullName: String,
@@ -28,7 +29,7 @@ case class GithubPull(fullName: String,
       comments = comments + reviewComments)
   }
 
-  def attachment(context: Context): Attachment = like.attachment(context)
+  def attachment(context: StaticContext): Attachment = like.attachment(context)
 
   def labeled(label: String): GithubPull = copy(labels = label :: labels)
 }
