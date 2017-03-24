@@ -19,8 +19,23 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) extends Log
 
   private[this] val REL_NEXT = "next"
 
+  private[this] val LINK_REGEX = ".*<(http.+)>;.*".r
+
+  private[this] val REL_REGEX = """.*rel="([a-zA-Z]+).*"""".r
+
   private[this] def parseLinkHeader(header: String): Map[String, String] = {
-    ???
+    header.split(",").flatMap { link =>
+      for {
+        url <- link match {
+          case LINK_REGEX(http) => Some(http)
+          case _ => None
+        }
+        rel <- link match {
+          case REL_REGEX(rel) => Some(rel)
+          case _ => None
+        }
+      } yield rel -> url
+    }(collection.breakOut)
   }
 
   private[this] def getPages[A : Reads](url: String): Future[List[A]] = {
@@ -33,11 +48,12 @@ class GithubService(context: Context)(implicit ec: ExecutionContext) extends Log
         req.withHeaders(AUTHORIZATION -> s"token $token")
       }.get().map { res =>
         val rateLimit = RateLimit(res)
+        val link = res.header(LINK)
 
-        logger.info(s"[$n] ${res.status} - ${rateLimit.pretty}")
+        logger.info(s"[$n] ${res.status} - ${rateLimit.pretty} - ${link.getOrElse("")}")
         logger.info(s"[$n] ${res.json}")
 
-        (res.header(LINK).map(parseLinkHeader).flatMap(_.get(REL_NEXT)), res.json.validate[A])
+        (link.map(parseLinkHeader).flatMap(_.get(REL_NEXT)), res.json.validate[A])
       }.flatMap {
         case (rel, JsSuccess(value, _)) => Future.successful((rel, value))
         case (_, JsError(errors)) => Future.failed(JsResultException(errors))
