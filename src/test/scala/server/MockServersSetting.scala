@@ -20,8 +20,10 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
                               personalAccessToken: Option[String] = None,
                               warningAfter: FiniteDuration = 7.days,
                               dangerAfter: FiniteDuration = 14.days,
-                              attachmentsLimit: Int = 20) {
-  private[this] val servers = new MockServers(9000)
+                              attachmentsLimit: Int = 20,
+                              pageSize: Int = 100) {
+  
+  private[server] val servers = new MockServers(pageSize)
 
   private[this] val github = GithubSetting(
     api = servers.github.api,
@@ -40,7 +42,7 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
     attachmentsLimit = attachmentsLimit,
     commentIconEmoji = ":speech_balloon:")
 
-  private[this] val context = new Context(now = now, github = github, slack = slack)
+  val context = new Context(now = now, github = github, slack = slack)
 
   def setOrg(fs: (GithubRepository => GithubRepository)*): Unit = {
     org.foreach { s =>
@@ -72,11 +74,15 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
     res.sortBy(_.pull.createdAt.toEpochSecond)
   }
 
-  def received(f: IncomingWebhook => Assertion)(implicit ec: ExecutionContext): Future[Assertion] = {
-    Main.run(context).map(_ => f(servers.slack.received.get())).andThen { case _ =>
+  def withServer[A](f: => Future[A])(implicit ec: ExecutionContext): Future[A] = {
+    f.andThen { case _ =>
       context.shutdown()
       servers.shutdown()
     }
+  }
+
+  def received(f: IncomingWebhook => Assertion)(implicit ec: ExecutionContext): Future[Assertion] = {
+    withServer(Main.run(context).map(_ => f(servers.slack.received.get())))
   }
 }
 

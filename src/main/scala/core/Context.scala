@@ -8,6 +8,9 @@ import com.typesafe.config.ConfigFactory
 import core.Context.StaticContext
 import play.api.libs.ws.ahc.AhcWSClient
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 class Context(val now: ZonedDateTime, val github: GithubSetting, val slack: SlackSetting) extends StaticContext {
   private[this] implicit val system = ActorSystem()
 
@@ -18,6 +21,7 @@ class Context(val now: ZonedDateTime, val github: GithubSetting, val slack: Slac
   def shutdown(): Unit = {
     ws.close()
     system.terminate()
+    Await.result(system.whenTerminated, Duration.Inf)
   }
 }
 
