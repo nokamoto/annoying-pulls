@@ -14,9 +14,13 @@ object AttachmentColor {
 
   implicit val format: Format[AttachmentColor] = {
     new Format[AttachmentColor] {
-      override def reads(json: JsValue): JsResult[AttachmentColor] = json.validate[String].flatMap { s =>
-        values.find(_.value == s).map(JsSuccess(_)).getOrElse(JsError(ValidationError(s"$s undefined")))
-      }
+      override def reads(json: JsValue): JsResult[AttachmentColor] =
+        json.validate[String].flatMap { s =>
+          values
+            .find(_.value == s)
+            .map(JsSuccess(_))
+            .getOrElse(JsError(ValidationError(s"$s undefined")))
+        }
 
       override def writes(o: AttachmentColor): JsValue = JsString(o.value)
     }

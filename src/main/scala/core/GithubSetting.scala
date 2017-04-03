@@ -26,6 +26,7 @@ object GithubSetting {
       org = config.getOptionString("org").map(Owner),
       username = config.getOptionString("username").map(Owner),
       excludedLabels = config.getStringList("excluded-labels").asScala.toList,
-      personalAccessToken = config.getOptionString("personal-access-token"))
+      personalAccessToken = config.getOptionString("personal-access-token")
+    )
   }
 }

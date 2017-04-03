@@ -25,4 +25,4 @@ jdk:
   - oraclejdk8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test:compile assembly
+  - sbt ++$TRAVIS_SCALA_VERSION scalafmtTest test:compile assembly

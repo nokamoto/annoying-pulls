@@ -5,10 +5,14 @@ import java.util.UUID
 
 import scala.util.Random
 
-case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]) {
+case class GithubRepository(owner: String,
+                            name: String,
+                            pulls: List[GithubPull]) {
   val fullName = s"$owner/$name"
 
-  def pull(number: Int, createdAt: ZonedDateTime, f: GithubPull => GithubPull): GithubRepository = {
+  def pull(number: Int,
+           createdAt: ZonedDateTime,
+           f: GithubPull => GithubPull): GithubRepository = {
     val login = UUID.randomUUID().toString
 
     val p = GithubPull(
@@ -21,10 +25,12 @@ case class GithubRepository(owner: String, name: String, pulls: List[GithubPull]
       login = login,
       avatarUrl = s"http://localhost/$login/avatar",
       comments = Random.nextInt(10),
-      reviewComments = Random.nextInt(10))
+      reviewComments = Random.nextInt(10)
+    )
 
     copy(pulls = f(p) :: pulls)
   }
 
-  def pull(number: Int, createdAt: ZonedDateTime): GithubRepository = pull(number, createdAt, x => x)
+  def pull(number: Int, createdAt: ZonedDateTime): GithubRepository =
+    pull(number, createdAt, x => x)
 }

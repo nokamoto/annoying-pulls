@@ -9,5 +9,6 @@ trait DefaultFutures extends ScalaFutures {
   protected[this] implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
-  protected[this] implicit val global: ExecutionContext = ExecutionContext.global
+  protected[this] implicit val global: ExecutionContext =
+    ExecutionContext.global
 }

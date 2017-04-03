@@ -7,7 +7,8 @@ trait GithubOwner {
 
   val repos: List[GithubRepository]
 
-  protected[this] def newRepo(name: String) = GithubRepository(owner = owner, name = name, pulls = Nil)
+  protected[this] def newRepo(name: String) =
+    GithubRepository(owner = owner, name = name, pulls = Nil)
 
   def toOwner: Owner = Owner(owner)
 }

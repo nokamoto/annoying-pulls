@@ -18,18 +18,24 @@ class MockServersSpec extends AsyncFlatSpec {
     val r4 = "r4"
     val setting = MockServersSetting(org = Some(org), pageSize = 3)
 
-    setting.setOrg(_.copy(name = r1), _.copy(name = r2), _.copy(name = r3), _.copy(name = r4))
+    setting.setOrg(_.copy(name = r1),
+                   _.copy(name = r2),
+                   _.copy(name = r3),
+                   _.copy(name = r4))
 
     withGithubServer(setting) { get =>
       for {
         (link, repos) <- get(s"/orgs/$org/repos").map { res =>
-          (res.header("LINK"), res.json.validate[List[Repo]].map(_.map(_.name)))
+          (res.header("LINK"),
+           res.json.validate[List[Repo]].map(_.map(_.name)))
         }
         (nextLink, nextRepos) <- get(s"/orgs/$org/repos/1").map { res =>
-          (res.header("LINK"), res.json.validate[List[Repo]].map(_.map(_.name)))
+          (res.header("LINK"),
+           res.json.validate[List[Repo]].map(_.map(_.name)))
         }
       } yield {
-        assert(link === Some(s"""<${setting.context.github.api}/orgs/mock-org/repos/1>; rel="next", <${setting.context.github.api}>; rel="dummy""""))
+        assert(link === Some(
+          s"""<${setting.context.github.api}/orgs/mock-org/repos/1>; rel="next", <${setting.context.github.api}>; rel="dummy""""))
         assert(nextLink === None)
 
         assert(repos === JsSuccess(r4 :: r3 :: r2 :: Nil))
@@ -40,8 +46,10 @@ class MockServersSpec extends AsyncFlatSpec {
 }
 
 object MockServersSpec {
-  def withGithubServer(setting: MockServersSetting)
-                      (f: (String => Future[WSResponse]) => Future[Assertion]): Future[Assertion] = {
-    setting.withServer(f(path => setting.context.ws.url(s"${setting.context.github.api}$path").get()))
+  def withGithubServer(setting: MockServersSetting)(
+      f: (String => Future[WSResponse]) => Future[Assertion])
+    : Future[Assertion] = {
+    setting.withServer(f(path =>
+      setting.context.ws.url(s"${setting.context.github.api}$path").get()))
   }
 }

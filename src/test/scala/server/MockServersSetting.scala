@@ -22,15 +22,15 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
                               dangerAfter: FiniteDuration = 14.days,
                               attachmentsLimit: Int = 20,
                               pageSize: Int = 100) {
-  
+
   private[server] val servers = new MockServers(pageSize)
 
-  private[this] val github = GithubSetting(
-    api = servers.github.api,
-    org = org.map(Owner),
-    username = user.map(Owner),
-    excludedLabels = excludedLabels,
-    personalAccessToken = personalAccessToken)
+  private[this] val github = GithubSetting(api = servers.github.api,
+                                           org = org.map(Owner),
+                                           username = user.map(Owner),
+                                           excludedLabels = excludedLabels,
+                                           personalAccessToken =
+                                             personalAccessToken)
 
   private[this] val slack = SlackSetting(
     incomingWebhook = servers.slack.incomingWebhook,
@@ -40,14 +40,16 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
     warningAfter = warningAfter,
     dangerAfter = dangerAfter,
     attachmentsLimit = attachmentsLimit,
-    commentIconEmoji = ":speech_balloon:")
+    commentIconEmoji = ":speech_balloon:"
+  )
 
   val context = new Context(now = now, github = github, slack = slack)
 
   def setOrg(fs: (GithubRepository => GithubRepository)*): Unit = {
     org.foreach { s =>
-      val res = fs.foldLeft(GithubOrg(owner = s)) { case (o, f) =>
-        o.repo(s"repo-${UUID.randomUUID()}", f)
+      val res = fs.foldLeft(GithubOrg(owner = s)) {
+        case (o, f) =>
+          o.repo(s"repo-${UUID.randomUUID()}", f)
       }
       servers.github.org.set(res)
     }
@@ -55,8 +57,9 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
 
   def setUser(fs: (GithubRepository => GithubRepository)*): Unit = {
     user.foreach { s =>
-      val res = fs.foldLeft(GithubUser(owner = s)) { case (u, f) =>
-        u.repo(s"repo-${UUID.randomUUID()}", f)
+      val res = fs.foldLeft(GithubUser(owner = s)) {
+        case (u, f) =>
+          u.repo(s"repo-${UUID.randomUUID()}", f)
       }
       servers.github.user.set(res)
     }
@@ -74,14 +77,17 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
     res.sortBy(_.pull.createdAt.toEpochSecond)
   }
 
-  def withServer[A](f: => Future[A])(implicit ec: ExecutionContext): Future[A] = {
-    f.andThen { case _ =>
-      context.shutdown()
-      servers.shutdown()
+  def withServer[A](f: => Future[A])(
+      implicit ec: ExecutionContext): Future[A] = {
+    f.andThen {
+      case _ =>
+        context.shutdown()
+        servers.shutdown()
     }
   }
 
-  def received(f: IncomingWebhook => Assertion)(implicit ec: ExecutionContext): Future[Assertion] = {
+  def received(f: IncomingWebhook => Assertion)(
+      implicit ec: ExecutionContext): Future[Assertion] = {
     withServer(Main.run(context).map(_ => f(servers.slack.received.get())))
   }
 }
