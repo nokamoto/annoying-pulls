@@ -32,6 +32,7 @@ object SlackSetting {
       warningAfter = config.getFiniteDuration("warning-after"),
       dangerAfter = config.getFiniteDuration("danger-after"),
       attachmentsLimit = config.getInt("attachments-limit"),
-      commentIconEmoji = config.getString("comment-icon-emoji"))
+      commentIconEmoji = config.getString("comment-icon-emoji")
+    )
   }
 }

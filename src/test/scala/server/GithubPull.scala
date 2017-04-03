@@ -18,15 +18,14 @@ case class GithubPull(fullName: String,
                       reviewComments: Long) {
 
   private[this] val like = {
-    PullLike(
-      fullName = fullName,
-      title = title,
-      htmlLink = url,
-      number = number,
-      createdAt = createdAt,
-      login = login,
-      avatarUrl = avatarUrl,
-      comments = comments + reviewComments)
+    PullLike(fullName = fullName,
+             title = title,
+             htmlLink = url,
+             number = number,
+             createdAt = createdAt,
+             login = login,
+             avatarUrl = avatarUrl,
+             comments = comments + reviewComments)
   }
 
   def attachment(context: StaticContext): Attachment = like.attachment(context)

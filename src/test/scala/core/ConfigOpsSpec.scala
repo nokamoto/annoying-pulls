@@ -17,7 +17,10 @@ class ConfigOpsSpec extends FlatSpec {
   it should "return finite duration in days" in {
     val key = "days"
     (1 to 1000).foreach { n =>
-      assert(ConfigFactory.parseString(s"$key = $n days").getFiniteDuration(key) === n.days)
+      assert(
+        ConfigFactory
+          .parseString(s"$key = $n days")
+          .getFiniteDuration(key) === n.days)
     }
   }
 }

@@ -18,11 +18,15 @@ class MainSpec extends AsyncFlatSpec {
 
   it should "post pull requests to incoming webhook ordered by created at" in {
     val now = ZonedDateTime.now()
-    val setting = MockServersSetting(now = now, org = Some("mock-org"), user = Some("mock-user"))
+    val setting = MockServersSetting(now = now,
+                                     org = Some("mock-org"),
+                                     user = Some("mock-user"))
 
-    setting.setOrg(repo1 => repo1.pull(1, now), repo2 => repo2.pull(2, now.minusDays(4)))
+    setting.setOrg(repo1 => repo1.pull(1, now),
+                   repo2 => repo2.pull(2, now.minusDays(4)))
 
-    setting.setUser(repo3 => repo3.pull(3, now.minusDays(3)).pull(4, now.minusDays(2)))
+    setting.setUser(repo3 =>
+      repo3.pull(3, now.minusDays(3)).pull(4, now.minusDays(2)))
 
     setting.received { message =>
       val expected = setting.pulls
@@ -38,12 +42,17 @@ class MainSpec extends AsyncFlatSpec {
     val now = ZonedDateTime.now()
     val dangerAfter = 14.days
     val warningAfter = 7.days
-    val setting = MockServersSetting(now = now, org = Some("mock-org"), dangerAfter = dangerAfter, warningAfter = warningAfter)
+    val setting = MockServersSetting(now = now,
+                                     org = Some("mock-org"),
+                                     dangerAfter = dangerAfter,
+                                     warningAfter = warningAfter)
 
-    setting.setOrg(repo => repo.
-      pull(1, now.minusDays(dangerAfter.toDays)).
-      pull(2, now.minusDays(warningAfter.toDays)).
-      pull(3, now))
+    setting.setOrg(
+      repo =>
+        repo
+          .pull(1, now.minusDays(dangerAfter.toDays))
+          .pull(2, now.minusDays(warningAfter.toDays))
+          .pull(3, now))
 
     setting.received { message =>
       val expected = setting.pulls
@@ -51,16 +60,22 @@ class MainSpec extends AsyncFlatSpec {
       assert(message.text === "3 pull requests opened")
       assert(message.attachments === expected.map(_.attachment))
 
-      assert(message.attachments.map(_.color) === Danger :: Warning :: Good :: Nil)
+      assert(
+        message.attachments.map(_.color) === Danger :: Warning :: Good :: Nil)
     }
   }
 
   it should "post pull requests to incoming webhook filtered by excluded labels" in {
     val wontfix = "wontfix"
     val bug = "bug"
-    val setting = MockServersSetting(org = Some("mock-org"), excludedLabels = wontfix :: Nil)
+    val setting = MockServersSetting(org = Some("mock-org"),
+                                     excludedLabels = wontfix :: Nil)
 
-    setting.setOrg(repo => repo.pull(1, setting.now, _.labeled(wontfix)).pull(2, setting.now, _.labeled(bug)))
+    setting.setOrg(
+      repo =>
+        repo
+          .pull(1, setting.now, _.labeled(wontfix))
+          .pull(2, setting.now, _.labeled(bug)))
 
     setting.received { message =>
       val expected = setting.pulls.filterNot(_.pull.labels.contains(wontfix))
@@ -72,11 +87,14 @@ class MainSpec extends AsyncFlatSpec {
 
   it should "post pull requests to incoming webhook suppressed by attachments limit" in {
     val attachmentsLimit = 20
-    val setting = MockServersSetting(org = Some("mock-org"), user = Some("mock-user"), attachmentsLimit = attachmentsLimit)
+    val setting = MockServersSetting(org = Some("mock-org"),
+                                     user = Some("mock-user"),
+                                     attachmentsLimit = attachmentsLimit)
 
     def make(repo: GithubRepository): GithubRepository = {
-      (1 to 15).foldLeft(repo) { case (r, n) =>
-        r.pull(n, setting.now.minusDays(n))
+      (1 to 15).foldLeft(repo) {
+        case (r, n) =>
+          r.pull(n, setting.now.minusDays(n))
       }
     }
 
@@ -94,15 +112,18 @@ class MainSpec extends AsyncFlatSpec {
   it should "post pull requests to incoming webhook suppressed and filtered" in {
     val attachmentsLimit = 20
     val wontfix = "wontfix"
-    val setting = MockServersSetting(org = Some("mock-org"), excludedLabels = wontfix :: Nil, attachmentsLimit = attachmentsLimit)
+    val setting = MockServersSetting(org = Some("mock-org"),
+                                     excludedLabels = wontfix :: Nil,
+                                     attachmentsLimit = attachmentsLimit)
 
     setting.setOrg { repo =>
-      (1 to 30).foldLeft(repo) { case (r, n) =>
-        if (n <= 5) {
-          r.pull(n, setting.now.minusDays(n), _.labeled(wontfix))
-        } else {
-          r.pull(n, setting.now.minusDays(n))
-        }
+      (1 to 30).foldLeft(repo) {
+        case (r, n) =>
+          if (n <= 5) {
+            r.pull(n, setting.now.minusDays(n), _.labeled(wontfix))
+          } else {
+            r.pull(n, setting.now.minusDays(n))
+          }
       }
     }
 

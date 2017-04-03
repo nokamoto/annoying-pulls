@@ -8,7 +8,9 @@ class GithubServiceSpec extends AsyncFlatSpec {
     val setting = MockServersSetting(org = Some("mock-org"), pageSize = 2)
     val service = new GithubService(setting.context)
 
-    setting.setOrg(_.pull(1, setting.now), _.pull(2, setting.now), _.pull(3, setting.now))
+    setting.setOrg(_.pull(1, setting.now),
+                   _.pull(2, setting.now),
+                   _.pull(3, setting.now))
 
     setting.withServer {
       service.pulls().map { pulls =>

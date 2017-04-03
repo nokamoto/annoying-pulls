@@ -45,7 +45,8 @@ class IncomingWebhookServiceSpec extends FlatSpec with DummyPullRequest {
     val pull = pullRequest(createdAt = now, comments = 1)
 
     withService(pull :: Nil) { actual =>
-      assert(actual.attachments.head.footer === s":login opened 0 second ago   ${slack.commentIconEmoji} 1")
+      assert(
+        actual.attachments.head.footer === s":login opened 0 second ago   ${slack.commentIconEmoji} 1")
     }
   }
 }
@@ -59,7 +60,8 @@ object IncomingWebhookServiceSpec {
     override val github: GithubSetting = Context.github
   }
 
-  private def withService(pulls: List[PullRequest])(f: IncomingWebhook => Unit): Unit = {
+  private def withService(pulls: List[PullRequest])(
+      f: IncomingWebhook => Unit): Unit = {
     val service = new IncomingWebhookService(context)
     f(service.incomingWebhook(pulls))
   }

@@ -11,7 +11,10 @@ import play.api.libs.ws.ahc.AhcWSClient
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class Context(val now: ZonedDateTime, val github: GithubSetting, val slack: SlackSetting) extends StaticContext {
+class Context(val now: ZonedDateTime,
+              val github: GithubSetting,
+              val slack: SlackSetting)
+    extends StaticContext {
   private[this] implicit val system = ActorSystem()
 
   private[this] implicit val materializer = ActorMaterializer()
@@ -40,5 +43,6 @@ object Context {
     val slack: SlackSetting
   }
 
-  def apply(): Context = new Context(now = ZonedDateTime.now(), github = github, slack = slack)
+  def apply(): Context =
+    new Context(now = ZonedDateTime.now(), github = github, slack = slack)
 }
