@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import core.{Context, GithubSetting, SlackSetting}
-import github.Owner
+import github.{Owner, OwnerRepo}
 import nokamoto.Main
 import org.scalatest.Assertion
 import server.MockServersSetting.PullAttachment
@@ -18,6 +18,7 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
                               user: Option[String] = None,
                               excludedLabels: List[String] = Nil,
                               personalAccessToken: Option[String] = None,
+                              includeRepos: List[OwnerRepo] = Nil,
                               warningAfter: FiniteDuration = 7.days,
                               dangerAfter: FiniteDuration = 14.days,
                               attachmentsLimit: Int = 20,
@@ -25,12 +26,14 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
 
   private[server] val servers = new MockServers(pageSize)
 
-  private[this] val github = GithubSetting(api = servers.github.api,
-                                           org = org.map(Owner),
-                                           username = user.map(Owner),
-                                           excludedLabels = excludedLabels,
-                                           personalAccessToken =
-                                             personalAccessToken)
+  private[this] val github = GithubSetting(
+    api = servers.github.api,
+    org = org.map(Owner),
+    username = user.map(Owner),
+    excludedLabels = excludedLabels,
+    personalAccessToken = personalAccessToken,
+    includeRepos = includeRepos
+  )
 
   private[this] val slack = SlackSetting(
     incomingWebhook = servers.slack.incomingWebhook,
@@ -45,14 +48,17 @@ case class MockServersSetting(now: ZonedDateTime = ZonedDateTime.now(),
 
   val context = new Context(now = now, github = github, slack = slack)
 
-  def setOrg(fs: (GithubRepository => GithubRepository)*): Unit = {
-    org.foreach { s =>
-      val res = fs.foldLeft(GithubOrg(owner = s)) {
-        case (o, f) =>
-          o.repo(s"repo-${UUID.randomUUID()}", f)
-      }
-      servers.github.org.set(res)
+  def forceSetOrg(name: String,
+                  fs: (GithubRepository => GithubRepository)*): Unit = {
+    val res = fs.foldLeft(GithubOrg(owner = name)) {
+      case (o, f) =>
+        o.repo(s"repo-${UUID.randomUUID()}", f)
     }
+    servers.github.org.set(res)
+  }
+
+  def setOrg(fs: (GithubRepository => GithubRepository)*): Unit = {
+    org.foreach(s => forceSetOrg(s, fs: _*))
   }
 
   def setUser(fs: (GithubRepository => GithubRepository)*): Unit = {

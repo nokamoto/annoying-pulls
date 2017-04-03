@@ -27,6 +27,8 @@ github {
   username = "nokamoto"
 
   excluded-labels = ["duplicate", "invalid", "wontfix"]
+
+  include-repos = [{owner: "nokamoto", repo: "annoying-pulls"}]
 }
 
 slack {
@@ -57,6 +59,7 @@ slack {
 | username | No | https://developer.github.com/v3/repos/#list-user-repositories |
 | exclude-labels | Yes | filter pull requests by label |
 | personal-access-token | No | `Authorization` token to increase [rate limit](https://developer.github.com/v3/#rate-limiting) |
+| include-repos | No | list owner repositories |
 
 #### Slack
 | key | mandatory | |
