@@ -19,8 +19,7 @@ fork in Test := true
 licenses := Seq(
   "MIT License" -> url("http://www.opensource.org/licenses/mit-license"))
 
-assemblyOutputPath in assembly := file(
-  "target/annoying-pulls-0.2.2-SNAPSHOT.jar")
+assemblyOutputPath in assembly := file("target/annoying-pulls-0.2.2.jar")
 
 assemblyMergeStrategy in assembly := {
   case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
