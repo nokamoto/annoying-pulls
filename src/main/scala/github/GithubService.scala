@@ -105,10 +105,15 @@ class GithubService(context: Context)(implicit ec: ExecutionContext)
 
   private[this] def getRepos(
       ownerOpt: Option[Owner],
-      path: Owner => String): Future[List[(Owner, Repo)]] = {
+      path: Owner => String): Future[List[OwnerRepo]] = {
     ownerOpt match {
       case Some(owner) =>
-        getPages[List[Repo]](path(owner)).map(_.flatten).map(_.map((owner, _)))
+        getPages[List[Repo]](path(owner))
+          .map(_.flatten)
+          .map(_.map((owner, _)).map {
+            case (o, r) =>
+              OwnerRepo(owner = o.name, repo = r.name)
+          })
       case None => Future.successful(Nil)
     }
   }
@@ -140,12 +145,12 @@ class GithubService(context: Context)(implicit ec: ExecutionContext)
       .map(_.reverse)
   }
 
-  private[this] def getPullRequests(owner: Owner,
-                                    repo: Repo): Future[List[PullRequest]] = {
+  private[this] def getPullRequests(
+      repo: OwnerRepo): Future[List[PullRequest]] = {
     for {
       pulls <- getPages[List[Pulls]](
-        s"${github.api}/repos/${owner.name}/${repo.name}/pulls").map(_.flatten)
-      res <- sequentially(pulls, (getPullRequest _).curried(repo))
+        s"${github.api}/repos/${repo.owner}/${repo.repo}/pulls").map(_.flatten)
+      res <- sequentially(pulls, (getPullRequest _).curried(repo.asRepo))
     } yield res
   }
 
@@ -156,6 +161,6 @@ class GithubService(context: Context)(implicit ec: ExecutionContext)
     for {
       org <- getOrgRepos
       user <- getUserRepos
-      res <- sequentially(org ++ user, (getPullRequests _).tupled)
+      res <- sequentially(org ++ user ++ github.includeRepos, getPullRequests)
     } yield res.flatten
 }

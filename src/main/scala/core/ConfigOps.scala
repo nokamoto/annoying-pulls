@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -15,6 +16,9 @@ object ConfigOps {
 
       def getFiniteDuration(path: String): FiniteDuration =
         config.getDuration(path, TimeUnit.SECONDS).seconds
+
+      def getOptionConfigList(path: String): Option[List[Config]] =
+        Try(config.getConfigList(path)).toOption.map(_.asScala.toList)
     }
   }
 }
